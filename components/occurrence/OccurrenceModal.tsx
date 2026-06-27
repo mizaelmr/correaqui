@@ -33,26 +33,14 @@ export function OccurrenceModal() {
   const isAuthor = session?.user?.id === o.userId
   const isLoggedIn = !!session
 
-  const requireAuth = (action: () => void) => {
-    if (!isLoggedIn) {
-      toast.error('Faça login para continuar.', {
-        action: { label: 'Entrar', onClick: () => router.push('/login') },
-      })
-      return
-    }
-    action()
-  }
-
   const handleConfirm = async () => {
-    requireAuth(async () => {
-      try {
-        await confirmMutation.mutateAsync(o.id)
-        toast.success('Obrigado! Ocorrência confirmada.')
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : ''
-        toast.error(msg.includes('409') ? 'Você já confirmou esta ocorrência.' : 'Erro ao confirmar.')
-      }
-    })
+    try {
+      await confirmMutation.mutateAsync(o.id)
+      toast.success('Obrigado! Ocorrência confirmada.')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      toast.error(msg.includes('409') ? 'Você já confirmou esta ocorrência.' : 'Erro ao confirmar.')
+    }
   }
 
   return (
@@ -145,32 +133,30 @@ export function OccurrenceModal() {
             </Tabs>
 
             <div className="flex gap-2 mt-5">
-              {/* Não é autor: pode confirmar */}
-              {!isAuthor && (
-                <Button
-                  variant="outline"
-                  className="flex-1 text-sm"
-                  onClick={handleConfirm}
-                  disabled={confirmMutation.isPending}
-                >
-                  <ThumbsUp className="w-4 h-4 mr-1.5" />
-                  Confirmar ({o.confirmations})
-                </Button>
-              )}
-
-              {/* Autor ou qualquer logado pode solicitar resolução */}
-              {o.status !== 'RESOLVIDA' && o.status !== 'AGUARDANDO_VALIDACAO' && (
-                <Button
-                  className="flex-1 text-sm bg-green-600 hover:bg-green-700"
-                  onClick={() => requireAuth(() => setShowResolution(true))}
-                >
-                  <CheckCircle className="w-4 h-4 mr-1.5" />
-                  Foi resolvido
-                </Button>
-              )}
-
-              {/* Sem login: mostra botão entrar */}
-              {!isLoggedIn && (
+              {isLoggedIn ? (
+                <>
+                  {!isAuthor && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 text-sm"
+                      onClick={handleConfirm}
+                      disabled={confirmMutation.isPending}
+                    >
+                      <ThumbsUp className="w-4 h-4 mr-1.5" />
+                      Confirmar ({o.confirmations})
+                    </Button>
+                  )}
+                  {o.status !== 'RESOLVIDA' && o.status !== 'AGUARDANDO_VALIDACAO' && (
+                    <Button
+                      className="flex-1 text-sm bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowResolution(true)}
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1.5" />
+                      Foi resolvido
+                    </Button>
+                  )}
+                </>
+              ) : (
                 <Button
                   variant="outline"
                   className="flex-1 text-sm"

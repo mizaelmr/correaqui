@@ -80,5 +80,5 @@ export const TIME_BANDS = [
   { max: Infinity, label: 'Crítica', color: '#ef4444', emoji: '🔴' },
 ]
 
-export const DEFAULT_MAP_CENTER: [number, number] = [-15.7801, -47.9292]
+export const DEFAULT_MAP_CENTER: [number, number] = [-9.3958, -40.4978]
 export const DEFAULT_MAP_ZOOM = 13

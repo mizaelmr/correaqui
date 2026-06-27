@@ -16,10 +16,19 @@ import { cn } from '@/lib/utils'
 
 export function Sidebar() {
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const { filters, setFilters, isSidebarOpen, closeSidebar } = useOccurrencesStore()
+  const { filters, setFilters, isSidebarOpen, closeSidebar, mapBounds } = useOccurrencesStore()
   const { data: occurrences = [], isLoading } = useOccurrences(filters)
 
-  const activeOccurrences = occurrences.filter((o: Occurrence) => o.status !== 'RESOLVIDA')
+  const visibleOccurrences = mapBounds
+    ? occurrences.filter((o: Occurrence) =>
+        o.latitude >= mapBounds.south &&
+        o.latitude <= mapBounds.north &&
+        o.longitude >= mapBounds.west &&
+        o.longitude <= mapBounds.east
+      )
+    : occurrences
+
+  const activeOccurrences = visibleOccurrences.filter((o: Occurrence) => o.status !== 'RESOLVIDA')
   const hasFilters = !!(filters.category || filters.severity || filters.status || filters.neighborhood)
 
   const clearFilters = () => setFilters({})
