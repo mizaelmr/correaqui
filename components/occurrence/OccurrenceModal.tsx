@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { X, MapPin, Calendar, RefreshCw, CheckCircle, ThumbsUp } from 'lucide-react'
+import { X, MapPin, Calendar, RefreshCw, CheckCircle, ThumbsUp, Share2, MessageCircle, Copy, Check } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -24,6 +24,7 @@ import { toast } from 'sonner'
 export function OccurrenceModal() {
   const { isOccurrenceModalOpen, selectedOccurrence, closeOccurrenceModal } = useOccurrencesStore()
   const [showResolution, setShowResolution] = useState(false)
+  const [copied, setCopied] = useState(false)
   const confirmMutation = useConfirmOccurrence()
   const { data: session } = useSession()
   const router = useRouter()
@@ -32,6 +33,15 @@ export function OccurrenceModal() {
   const o = selectedOccurrence
   const isAuthor = session?.user?.id === o.userId
   const isLoggedIn = !!session
+
+  const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/ocorrencia/${o.id}`
+  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no correAquiPrefeito: ${shareUrl}`)
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(shareUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleConfirm = async () => {
     try {
@@ -132,7 +142,36 @@ export function OccurrenceModal() {
               </TabsContent>
             </Tabs>
 
-            <div className="flex gap-2 mt-5">
+            {/* Compartilhar */}
+            <div className="flex gap-2 mt-5 pt-4 border-t border-gray-100">
+              <a
+                href={`https://wa.me/?text=${waText}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                WhatsApp
+              </a>
+              <button
+                onClick={handleCopy}
+                className="flex-1 flex items-center justify-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Copiado!' : 'Copiar link'}
+              </button>
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+                title="Ver página completa"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            <div className="flex gap-2 mt-3">
               {isLoggedIn ? (
                 <>
                   {!isAuthor && (

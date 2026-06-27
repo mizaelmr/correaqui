@@ -6,7 +6,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const occurrence = await prisma.occurrence.findUnique({
       where: { id },
-      include: { photos: true, timeline: true },
+      include: { photos: true, timeline: true, user: { select: { id: true, name: true, image: true } } },
     })
     if (!occurrence) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 })
     return NextResponse.json(occurrence)
