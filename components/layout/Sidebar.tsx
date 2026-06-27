@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import { useState } from 'react'
 import { Filter, ChevronDown, ChevronUp, X } from 'lucide-react'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OccurrenceCard } from '@/components/occurrence/OccurrenceCard'
@@ -143,7 +142,7 @@ export function Sidebar() {
       </div>
 
       {/* Lista */}
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="p-2 space-y-2">
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
@@ -159,19 +158,19 @@ export function Sidebar() {
               )}
             </div>
           ) : (
-            activeOccurrences.map((occurrence: Occurrence, index: number) => (
-              <div key={occurrence.id}>
-                {index > 0 && index % 5 === 0 && <AdBannerSidebar slot={`sidebar-between-${index}`} />}
-                <OccurrenceCard occurrence={occurrence} />
-              </div>
-            ))
+            activeOccurrences.flatMap((occurrence: Occurrence, index: number) => {
+              const items = []
+              // ── ADSENSE SIDEBAR ── a cada 3 ocorrências exibe um card de anúncio
+              if (index > 0 && index % 3 === 0) {
+                items.push(<AdBannerSidebar key={`ad-${index}`} slot={`sidebar-between-${index}`} />)
+              }
+              items.push(<OccurrenceCard key={occurrence.id} occurrence={occurrence} />)
+              return items
+            })
           )}
         </div>
-      </ScrollArea>
-
-      <div className="border-t border-gray-100">
-        <AdBannerSidebar slot="sidebar-bottom" />
       </div>
+
     </div>
   )
 
