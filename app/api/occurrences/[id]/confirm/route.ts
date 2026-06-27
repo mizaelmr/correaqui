@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth'
+import type { PrismaClient } from '@prisma/client'
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -20,7 +21,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Você já confirmou esta ocorrência.' }, { status: 409 })
     }
 
-    const occurrence = await prisma.$transaction(async (tx) => {
+    const occurrence = await prisma.$transaction(async (tx: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>) => {
       await tx.confirmation.create({ data: { occurrenceId: id, userId } })
 
       return tx.occurrence.update({
