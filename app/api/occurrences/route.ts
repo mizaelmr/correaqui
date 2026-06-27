@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/auth'
 import type { Category, Severity, OccurrenceStatus } from '@/types'
 
 export async function GET(req: NextRequest) {
@@ -29,7 +30,11 @@ export async function GET(req: NextRequest) {
 
     const occurrences = await prisma.occurrence.findMany({
       where,
-      include: { photos: true, timeline: true },
+      include: {
+        photos: true,
+        timeline: true,
+        user: { select: { id: true, name: true, image: true } },
+      },
       orderBy: { createdAt: 'desc' },
     })
 
@@ -42,6 +47,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Autenticação necessária.' }, { status: 401 })
+    }
+
     const body = await req.json()
     const {
       title, description, category, severity, latitude, longitude,
@@ -62,6 +72,7 @@ export async function POST(req: NextRequest) {
         state,
         reporterName,
         reporterPhone,
+        userId: session.user.id,
         photos: {
           create: (photos as string[]).map((url: string) => ({ url })),
         },

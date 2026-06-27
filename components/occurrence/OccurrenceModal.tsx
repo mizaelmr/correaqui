@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { X, MapPin, Calendar, RefreshCw, CheckCircle, ThumbsUp } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -23,18 +25,34 @@ export function OccurrenceModal() {
   const { isOccurrenceModalOpen, selectedOccurrence, closeOccurrenceModal } = useOccurrencesStore()
   const [showResolution, setShowResolution] = useState(false)
   const confirmMutation = useConfirmOccurrence()
+  const { data: session } = useSession()
+  const router = useRouter()
 
   if (!selectedOccurrence) return null
-
   const o = selectedOccurrence
+  const isAuthor = session?.user?.id === o.userId
+  const isLoggedIn = !!session
+
+  const requireAuth = (action: () => void) => {
+    if (!isLoggedIn) {
+      toast.error('Faça login para continuar.', {
+        action: { label: 'Entrar', onClick: () => router.push('/login') },
+      })
+      return
+    }
+    action()
+  }
 
   const handleConfirm = async () => {
-    try {
-      await confirmMutation.mutateAsync(o.id)
-      toast.success('Obrigado! Ocorrência confirmada.')
-    } catch {
-      toast.error('Erro ao confirmar ocorrência.')
-    }
+    requireAuth(async () => {
+      try {
+        await confirmMutation.mutateAsync(o.id)
+        toast.success('Obrigado! Ocorrência confirmada.')
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : ''
+        toast.error(msg.includes('409') ? 'Você já confirmou esta ocorrência.' : 'Erro ao confirmar.')
+      }
+    })
   }
 
   return (
@@ -58,6 +76,11 @@ export function OccurrenceModal() {
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <SeverityBadge severity={o.severity} />
                 <StatusBadge status={o.status} />
+                {o.userId && (
+                  <span className="text-xs text-gray-400">
+                    por {isAuthor ? 'você' : 'cidadão'}
+                  </span>
+                )}
               </div>
             </DialogHeader>
           </div>
@@ -102,7 +125,7 @@ export function OccurrenceModal() {
               </div>
 
               <div className="text-xs text-gray-400">
-                <span>📍 {o.latitude.toFixed(6)}, {o.longitude.toFixed(6)}</span>
+                📍 {o.latitude.toFixed(6)}, {o.longitude.toFixed(6)}
               </div>
 
               <TimeIndicator date={o.createdAt} showBar />
@@ -122,22 +145,38 @@ export function OccurrenceModal() {
             </Tabs>
 
             <div className="flex gap-2 mt-5">
-              <Button
-                variant="outline"
-                className="flex-1 text-sm"
-                onClick={handleConfirm}
-                disabled={confirmMutation.isPending}
-              >
-                <ThumbsUp className="w-4 h-4 mr-1.5" />
-                Confirmar ({o.confirmations})
-              </Button>
+              {/* Não é autor: pode confirmar */}
+              {!isAuthor && (
+                <Button
+                  variant="outline"
+                  className="flex-1 text-sm"
+                  onClick={handleConfirm}
+                  disabled={confirmMutation.isPending}
+                >
+                  <ThumbsUp className="w-4 h-4 mr-1.5" />
+                  Confirmar ({o.confirmations})
+                </Button>
+              )}
+
+              {/* Autor ou qualquer logado pode solicitar resolução */}
               {o.status !== 'RESOLVIDA' && o.status !== 'AGUARDANDO_VALIDACAO' && (
                 <Button
                   className="flex-1 text-sm bg-green-600 hover:bg-green-700"
-                  onClick={() => setShowResolution(true)}
+                  onClick={() => requireAuth(() => setShowResolution(true))}
                 >
                   <CheckCircle className="w-4 h-4 mr-1.5" />
                   Foi resolvido
+                </Button>
+              )}
+
+              {/* Sem login: mostra botão entrar */}
+              {!isLoggedIn && (
+                <Button
+                  variant="outline"
+                  className="flex-1 text-sm"
+                  onClick={() => router.push('/login')}
+                >
+                  Entrar para interagir
                 </Button>
               )}
             </div>

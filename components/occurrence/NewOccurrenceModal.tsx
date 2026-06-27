@@ -4,8 +4,10 @@ import { useState, useCallback, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Upload, X, Loader2, MapPin, AlertCircle } from 'lucide-react'
+import { Upload, X, Loader2, MapPin, AlertCircle, LogIn } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -38,6 +40,8 @@ type FormData = z.infer<typeof schema>
 
 export function NewOccurrenceModal() {
   const { isNewOccurrenceModalOpen, closeNewOccurrenceModal } = useOccurrencesStore()
+  const { data: session } = useSession()
+  const router = useRouter()
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
@@ -147,6 +151,46 @@ export function NewOccurrenceModal() {
             Nova Ocorrência
           </DialogTitle>
         </DialogHeader>
+
+        {!session ? (
+          <div className="py-10 flex flex-col items-center gap-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center">
+              <LogIn className="w-7 h-7 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 mb-1">Login necessário</p>
+              <p className="text-sm text-gray-500 max-w-xs">
+                Para registrar uma ocorrência você precisa estar conectado à sua conta.
+              </p>
+            </div>
+            <div className="flex gap-3 mt-1">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleClose(); router.push('/login') }}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Entrar
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">
+              Não tem conta?{' '}
+              <button
+                type="button"
+                onClick={() => { handleClose(); router.push('/cadastro') }}
+                className="text-blue-600 hover:underline"
+              >
+                Cadastre-se grátis
+              </button>
+            </p>
+          </div>
+        ) : (
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -312,6 +356,7 @@ export function NewOccurrenceModal() {
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   )

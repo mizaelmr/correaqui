@@ -56,6 +56,7 @@ export interface Occurrence {
   reporterName?: string | null
   reporterPhone?: string | null
   confirmations: number
+  userId?: string | null
   photos: Photo[]
   timeline: TimelineEvent[]
   createdAt: string

@@ -1,14 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { auth } from '@/auth'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await auth()
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Autenticação necessária.' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await req.json()
     const { comment, reporterName, reporterPhone, photos } = body
 
     await prisma.resolutionRequest.create({
-      data: { occurrenceId: id, comment, reporterName, reporterPhone, photos: photos ?? [] },
+      data: {
+        occurrenceId: id,
+        userId: session.user.id,
+        comment,
+        reporterName,
+        reporterPhone,
+        photos: photos ?? [],
+      },
     })
 
     const occurrence = await prisma.occurrence.update({
