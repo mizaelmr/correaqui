@@ -14,7 +14,7 @@ interface OccurrenceCardProps {
 }
 
 export function OccurrenceCard({ occurrence: o }: OccurrenceCardProps) {
-  const { selectedOccurrence, setSelectedOccurrence, setMapCenter, openOccurrenceModal } =
+  const { selectedOccurrence, setSelectedOccurrence, setMapCenter, openOccurrenceModal, closeSidebar } =
     useOccurrencesStore()
 
   const isSelected = selectedOccurrence?.id === o.id
@@ -22,11 +22,13 @@ export function OccurrenceCard({ occurrence: o }: OccurrenceCardProps) {
   const handleClick = () => {
     setSelectedOccurrence(o)
     setMapCenter([o.latitude, o.longitude])
+    closeSidebar()
   }
 
   const handleDetailsClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     openOccurrenceModal(o)
+    closeSidebar()
   }
 
   return (

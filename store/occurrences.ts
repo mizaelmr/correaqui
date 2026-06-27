@@ -9,6 +9,7 @@ interface OccurrencesState {
   mapZoom: number | null
   isNewOccurrenceModalOpen: boolean
   isOccurrenceModalOpen: boolean
+  isSidebarOpen: boolean
 
   setSelectedOccurrence: (occurrence: Occurrence | null) => void
   setHoveredOccurrence: (id: string | null) => void
@@ -19,6 +20,8 @@ interface OccurrencesState {
   closeNewOccurrenceModal: () => void
   openOccurrenceModal: (occurrence: Occurrence) => void
   closeOccurrenceModal: () => void
+  toggleSidebar: () => void
+  closeSidebar: () => void
 }
 
 export const useOccurrencesStore = create<OccurrencesState>((set) => ({
@@ -29,6 +32,7 @@ export const useOccurrencesStore = create<OccurrencesState>((set) => ({
   mapZoom: null,
   isNewOccurrenceModalOpen: false,
   isOccurrenceModalOpen: false,
+  isSidebarOpen: false,
 
   setSelectedOccurrence: (occurrence) =>
     set({ selectedOccurrence: occurrence }),
@@ -50,4 +54,8 @@ export const useOccurrencesStore = create<OccurrencesState>((set) => ({
 
   closeOccurrenceModal: () =>
     set({ isOccurrenceModalOpen: false }),
+
+  toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
+
+  closeSidebar: () => set({ isSidebarOpen: false }),
 }))
