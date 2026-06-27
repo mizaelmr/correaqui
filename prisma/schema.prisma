@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Category {
+  BURACO
+  RUA_ALAGADA
+  LIXO_ACUMULADO
+  ILUMINACAO_PUBLICA
+  VAZAMENTO_AGUA
+  ESGOTO
+  ARVORE_CAIDA
+  OBRA_ABANDONADA
+  OUTRO
+}
+
+enum Severity {
+  BAIXA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+enum OccurrenceStatus {
+  ABERTA
+  EM_ANALISE
+  AGUARDANDO_VALIDACAO
+  RESOLVIDA
+}
+
+enum TimelineEventType {
+  CRIADA
+  FOTOS_ADICIONADAS
+  CONFIRMADA
+  STATUS_ALTERADO
+  RESOLUCAO_SOLICITADA
+  RESOLUCAO_APROVADA
+}
+
+model Occurrence {
+  id            String           @id @default(cuid())
+  title         String
+  description   String
+  category      Category
+  severity      Severity
+  status        OccurrenceStatus @default(ABERTA)
+  latitude      Float
+  longitude     Float
+  address       String
+  neighborhood  String?
+  city          String?
+  state         String?
+  reporterName  String?
+  reporterPhone String?
+  confirmations Int              @default(0)
+  photos        Photo[]
+  timeline      TimelineEvent[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([severity])
+  @@index([latitude, longitude])
+}
+
+model Photo {
+  id           String     @id @default(cuid())
+  url          String
+  occurrence   Occurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  occurrenceId String
+  createdAt    DateTime   @default(now())
+}
+
+model TimelineEvent {
+  id           String            @id @default(cuid())
+  type         TimelineEventType
+  description  String
+  occurrence   Occurrence        @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  occurrenceId String
+  createdAt    DateTime          @default(now())
+}
+
+model ResolutionRequest {
+  id            String   @id @default(cuid())
+  occurrenceId  String
+  comment       String?
+  reporterName  String?
+  reporterPhone String?
+  photos        String[]
+  createdAt     DateTime @default(now())
+}

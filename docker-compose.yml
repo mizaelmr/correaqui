@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: correaqui_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: correaqui
+      POSTGRES_PASSWORD: correaqui123
+      POSTGRES_DB: correaqui
+    ports:
+      - "5433:5432"
+    volumes:
+      - correaqui_pgdata:/var/lib/postgresql/data
+
+volumes:
+  correaqui_pgdata:
