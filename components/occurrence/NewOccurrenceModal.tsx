@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Upload, X, Loader2, MapPin, AlertCircle } from 'lucide-react'
+import { Upload, X, Loader2, MapPin, AlertCircle, LogIn, Search } from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -30,23 +32,27 @@ const schema = z.object({
   category: z.string().min(1, 'Selecione uma categoria'),
   severity: z.string().min(1, 'Selecione a gravidade'),
   description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
-  reporterName: z.string().optional(),
-  reporterPhone: z.string().optional(),
+  streetAddress: z.string().min(1, 'Informe o endereço'),
 })
 
 type FormData = z.infer<typeof schema>
 
 export function NewOccurrenceModal() {
   const { isNewOccurrenceModalOpen, closeNewOccurrenceModal } = useOccurrencesStore()
+  const { data: session } = useSession()
+  const router = useRouter()
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
+  const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(undefined)
+  const suppressAddressSync = useRef(false)
+  const fwdGeoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const createMutation = useCreateOccurrence()
   const { location, loading: geoLoading, getLocation } = useGeolocation()
   const { geocode, addressInfo, loading: geocodeLoading } = useReverseGeocode()
 
-  const { register, handleSubmit, formState: { errors }, reset, control } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, reset, control, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
@@ -64,6 +70,13 @@ export function NewOccurrenceModal() {
     }
   }, [location])
 
+  useEffect(() => {
+    if (addressInfo?.address && !suppressAddressSync.current) {
+      setValue('streetAddress', addressInfo.address, { shouldValidate: false })
+    }
+    suppressAddressSync.current = false
+  }, [addressInfo, setValue])
+
   const handleMarkerMove = useCallback(
     (lat: number, lng: number) => {
       setMarkerPos([lat, lng])
@@ -71,6 +84,38 @@ export function NewOccurrenceModal() {
     },
     [geocode]
   )
+
+  const [searching, setSearching] = useState(false)
+  const streetValue = watch('streetAddress')
+  const { ref: streetRef, onChange: streetOnChange, ...streetRest } = register('streetAddress')
+
+  const searchAddress = async () => {
+    const value = streetValue?.trim()
+    if (!value || value.length < 3) return
+    setSearching(true)
+    try {
+      const bias = markerPos
+        ? `&viewbox=${markerPos[1] - 0.5},${markerPos[0] + 0.5},${markerPos[1] + 0.5},${markerPos[0] - 0.5}&countrycodes=br`
+        : '&countrycodes=br'
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&limit=1&accept-language=pt-BR${bias}`
+      )
+      const data = await res.json()
+      if (data[0]) {
+        const coords: [number, number] = [parseFloat(data[0].lat), parseFloat(data[0].lon)]
+        suppressAddressSync.current = true
+        setMarkerPos(coords)
+        setMapCenter(coords)
+        geocode(coords[0], coords[1])
+      } else {
+        toast.error('Endereço não encontrado. Tente ser mais específico.')
+      }
+    } catch {
+      toast.error('Erro ao buscar endereço.')
+    } finally {
+      setSearching(false)
+    }
+  }
 
   const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])
@@ -86,9 +131,11 @@ export function NewOccurrenceModal() {
   }
 
   const handleClose = () => {
-    reset()
+    reset({ category: '', severity: '', description: '', streetAddress: '' })
     setPhotos([])
     setMarkerPos(null)
+    setMapCenter(undefined)
+    if (fwdGeoTimer.current) clearTimeout(fwdGeoTimer.current)
     closeNewOccurrenceModal()
   }
 
@@ -120,12 +167,10 @@ export function NewOccurrenceModal() {
         severity: data.severity as Severity,
         latitude: markerPos[0],
         longitude: markerPos[1],
-        address: addressInfo?.address || 'Endereço não identificado',
+        address: data.streetAddress,
         neighborhood: addressInfo?.neighborhood,
         city: addressInfo?.city,
         state: addressInfo?.state,
-        reporterName: data.reporterName,
-        reporterPhone: data.reporterPhone,
         photos: uploadedUrls,
       })
 
@@ -147,6 +192,46 @@ export function NewOccurrenceModal() {
             Nova Ocorrência
           </DialogTitle>
         </DialogHeader>
+
+        {!session ? (
+          <div className="py-10 flex flex-col items-center gap-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center">
+              <LogIn className="w-7 h-7 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 mb-1">Login necessário</p>
+              <p className="text-sm text-gray-500 max-w-xs">
+                Para registrar uma ocorrência você precisa estar conectado à sua conta.
+              </p>
+            </div>
+            <div className="flex gap-3 mt-1">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => { handleClose(); router.push('/login') }}
+                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Entrar
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">
+              Não tem conta?{' '}
+              <button
+                type="button"
+                onClick={() => { handleClose(); router.push('/cadastro') }}
+                className="text-blue-600 hover:underline"
+              >
+                Cadastre-se grátis
+              </button>
+            </p>
+          </div>
+        ) : (
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -226,20 +311,43 @@ export function NewOccurrenceModal() {
                 <span className="ml-2 text-sm text-gray-400">Obtendo localização...</span>
               </div>
             ) : markerPos ? (
-              <MiniMap position={markerPos} onMarkerMove={handleMarkerMove} />
+              <MiniMap position={markerPos} center={mapCenter} onMarkerMove={handleMarkerMove} />
             ) : (
               <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center text-sm text-gray-400">
                 <AlertCircle className="w-4 h-4 mr-1.5" />
                 Não foi possível obter localização
               </div>
             )}
-            {addressInfo && !geocodeLoading && (
-              <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
-                <MapPin className="w-3 h-3" />
-                {addressInfo.address}
-              </p>
+            <p className="text-xs text-gray-400 mt-1 mb-2">Arraste o marcador ou busque pelo endereço.</p>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <Input
+                  placeholder="Nome da rua e número"
+                  className={`pl-8 pr-2 text-sm ${errors.streetAddress ? 'border-red-500' : ''}`}
+                  onChange={streetOnChange}
+                  ref={streetRef}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), searchAddress())}
+                  {...streetRest}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={searchAddress}
+                disabled={searching || geocodeLoading}
+                className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                title="Buscar endereço"
+              >
+                {searching ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                ) : (
+                  <Search className="w-4 h-4 text-gray-500" />
+                )}
+              </button>
+            </div>
+            {errors.streetAddress && (
+              <p className="text-xs text-red-500 mt-1">{errors.streetAddress.message}</p>
             )}
-            <p className="text-xs text-gray-400 mt-1">Arraste o marcador para ajustar a posição exata.</p>
           </div>
 
           <div>
@@ -273,29 +381,6 @@ export function NewOccurrenceModal() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-sm font-medium mb-1.5 block">
-                Nome <span className="text-gray-400 font-normal text-xs">(opcional)</span>
-              </Label>
-              <Input placeholder="Seu nome" className="text-sm" {...register('reporterName')} />
-            </div>
-            <div>
-              <Label className="text-sm font-medium mb-1.5 block">
-                Telefone <span className="text-gray-400 font-normal text-xs">(opcional)</span>
-              </Label>
-              <Input placeholder="(00) 00000-0000" className="text-sm" {...register('reporterPhone')} />
-            </div>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-            <p className="text-xs text-amber-800">
-              🔒 Seu nome e telefone nunca serão exibidos publicamente. Essas informações
-              poderão ser utilizadas apenas para contato caso seja necessário obter mais detalhes
-              da ocorrência.
-            </p>
-          </div>
-
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
               Cancelar
@@ -312,6 +397,7 @@ export function NewOccurrenceModal() {
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   )

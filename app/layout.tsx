@@ -6,7 +6,7 @@ import { Providers } from '@/providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CorreAqui — Sua cidade, sua voz.',
+  title: 'correAquiPrefeito — Sua cidade, sua voz.',
   description:
     'Plataforma colaborativa para registro e acompanhamento de problemas de infraestrutura urbana.',
   keywords: 'infraestrutura urbana, buracos, ocorrências, cidade, prefeitura, cidadão',

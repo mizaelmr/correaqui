@@ -41,6 +41,32 @@ enum TimelineEventType {
   RESOLUCAO_APROVADA
 }
 
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  image         String?
+  password      String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  occurrences    Occurrence[]
+  confirmations  Confirmation[]
+  passwordResets PasswordReset[]
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  token     String   @unique @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model Occurrence {
   id            String           @id @default(cuid())
   title         String
@@ -57,15 +83,30 @@ model Occurrence {
   reporterName  String?
   reporterPhone String?
   confirmations Int              @default(0)
+  userId        String?
+  user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   photos        Photo[]
   timeline      TimelineEvent[]
+  confirmationsList Confirmation[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
   @@index([status])
   @@index([category])
   @@index([severity])
+  @@index([userId])
   @@index([latitude, longitude])
+}
+
+model Confirmation {
+  id           String     @id @default(cuid())
+  occurrenceId String
+  userId       String
+  occurrence   Occurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([occurrenceId, userId])
 }
 
 model Photo {
@@ -88,6 +129,7 @@ model TimelineEvent {
 model ResolutionRequest {
   id            String   @id @default(cuid())
   occurrenceId  String
+  userId        String?
   comment       String?
   reporterName  String?
   reporterPhone String?

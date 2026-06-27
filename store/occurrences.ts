@@ -1,12 +1,20 @@
 import { create } from 'zustand'
 import type { Occurrence, OccurrenceFilters } from '@/types'
 
+interface MapBounds {
+  north: number
+  south: number
+  east: number
+  west: number
+}
+
 interface OccurrencesState {
   selectedOccurrence: Occurrence | null
   hoveredOccurrence: string | null
   filters: OccurrenceFilters
   mapCenter: [number, number] | null
   mapZoom: number | null
+  mapBounds: MapBounds | null
   isNewOccurrenceModalOpen: boolean
   isOccurrenceModalOpen: boolean
   isSidebarOpen: boolean
@@ -16,6 +24,7 @@ interface OccurrencesState {
   setFilters: (filters: OccurrenceFilters) => void
   setMapCenter: (center: [number, number]) => void
   setMapZoom: (zoom: number) => void
+  setMapBounds: (bounds: MapBounds) => void
   openNewOccurrenceModal: () => void
   closeNewOccurrenceModal: () => void
   openOccurrenceModal: (occurrence: Occurrence) => void
@@ -30,6 +39,7 @@ export const useOccurrencesStore = create<OccurrencesState>((set) => ({
   filters: {},
   mapCenter: null,
   mapZoom: null,
+  mapBounds: null,
   isNewOccurrenceModalOpen: false,
   isOccurrenceModalOpen: false,
   isSidebarOpen: false,
@@ -44,6 +54,8 @@ export const useOccurrencesStore = create<OccurrencesState>((set) => ({
   setMapCenter: (center) => set({ mapCenter: center }),
 
   setMapZoom: (zoom) => set({ mapZoom: zoom }),
+
+  setMapBounds: (bounds) => set({ mapBounds: bounds }),
 
   openNewOccurrenceModal: () => set({ isNewOccurrenceModalOpen: true }),
 
