@@ -186,7 +186,7 @@ export function NewOccurrenceModal() {
   return (
     <Dialog open={isNewOccurrenceModalOpen} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="mb-4">
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-blue-600" />
             Nova Ocorrência
