@@ -57,7 +57,7 @@ export default async function MinhasOcorrenciasPage() {
           {occurrences.map((o) => {
             const band = getTimeBand(o.createdAt)
             return (
-              <div key={o.id} className="bg-white rounded-xl border border-gray-200 p-4 flex gap-3">
+              <Link key={o.id} href={`/ocorrencia/${o.id}`} className="bg-white rounded-xl border border-gray-200 p-4 flex gap-3 hover:border-blue-200 hover:shadow-sm transition-all">
                 {o.photos[0] ? (
                   <img src={o.photos[0].url} alt="" className="w-20 h-20 object-cover rounded-lg shrink-0" />
                 ) : (
@@ -100,7 +100,7 @@ export default async function MinhasOcorrenciasPage() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>
