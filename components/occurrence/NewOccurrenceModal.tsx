@@ -373,7 +373,7 @@ export function NewOccurrenceModal() {
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  capture
                   className="hidden"
                   onChange={handleFilesChange}
                 />

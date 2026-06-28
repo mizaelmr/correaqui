@@ -114,7 +114,7 @@ export function ResolutionModal({ occurrenceId, open, onClose }: ResolutionModal
                 <input
                   type="file"
                   accept="image/*"
-                  capture="environment"
+                  capture
                   className="hidden"
                   onChange={handleFilesChange}
                 />
