@@ -17,7 +17,7 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
   const openOccurrenceModal = useOccurrencesStore((s) => s.openOccurrenceModal)
 
   return (
-    <div className="p-3 pt-5 min-w-[260px]">
+    <div className="p-3 pt-8 min-w-[260px]">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5">
           <CategoryIcon category={occurrence.category} />
