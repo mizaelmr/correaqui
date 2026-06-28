@@ -7,7 +7,11 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('Seeding database...')
 
-  await prisma.occurrence.deleteMany()
+  const existing = await prisma.occurrence.count()
+  if (existing > 0) {
+    console.log(`Skipping seed: ${existing} occurrences already exist.`)
+    return
+  }
 
   const occurrences = [
     {
