@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join, extname } from 'path'
+import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
+import { extname } from 'path'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,18 +27,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Arquivo muito grande (máx. 10MB)' }, { status: 400 })
     }
 
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
     const ext = extname(file.name) || '.jpg'
     const filename = `${randomUUID()}${ext}`
-    const uploadDir = join(process.cwd(), 'public', 'uploads')
+    const bytes = await file.arrayBuffer()
 
-    await mkdir(uploadDir, { recursive: true })
-    await writeFile(join(uploadDir, filename), buffer)
+    const { error } = await supabase.storage
+      .from('uploads')
+      .upload(filename, bytes, { contentType: file.type })
 
-    const url = `/uploads/${filename}`
-    return NextResponse.json({ url }, { status: 201 })
+    if (error) {
+      console.error('Supabase storage error:', error)
+      return NextResponse.json({ error: 'Erro ao fazer upload' }, { status: 500 })
+    }
+
+    const { data } = supabase.storage.from('uploads').getPublicUrl(filename)
+
+    return NextResponse.json({ url: data.publicUrl }, { status: 201 })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Erro ao fazer upload' }, { status: 500 })
