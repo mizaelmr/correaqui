@@ -39,19 +39,19 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
 
       <TimeIndicator date={occurrence.createdAt} />
 
-      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
+      <div className="mt-2 pt-2 border-t border-gray-100 space-y-2">
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
           <span>{occurrence.confirmations} confirmações</span>
         </div>
         {occurrence.photos.length > 0 && (
-          <div className="flex -space-x-1">
+          <div className="flex gap-1.5">
             {occurrence.photos.slice(0, 3).map((photo) => (
               <img
                 key={photo.id}
                 src={photo.url}
                 alt=""
-                className="w-6 h-6 rounded object-cover border border-white"
+                className="w-16 h-16 rounded-lg object-cover border border-gray-200"
               />
             ))}
           </div>
