@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Share2, Copy, Check, MessageCircle } from 'lucide-react'
 
 interface Props {
@@ -11,16 +11,12 @@ interface Props {
 
 export function ShareButtons({ path, title, address }: Props) {
   const [copied, setCopied] = useState(false)
-  const [origin, setOrigin] = useState('')
 
-  useEffect(() => {
-    setOrigin(window.location.origin)
-  }, [])
-
-  const url = origin ? `${origin}${path}` : path
-
-  const waText = encodeURIComponent(`🚨 *${title}*\n📍 ${address}\n\nVeja no correAquiPrefeito: ${url}`)
-  const waUrl = `https://wa.me/?text=${waText}`
+  const handleWhatsApp = () => {
+    const fullUrl = `${window.location.origin}${path}`
+    const text = encodeURIComponent(`🚨 *${title}*\n📍 ${address}\n\nVeja no correAquiPrefeito: ${fullUrl}`)
+    window.open(`https://wa.me/?text=${text}`, '_blank')
+  }
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(`${window.location.origin}${path}`)
@@ -35,15 +31,13 @@ export function ShareButtons({ path, title, address }: Props) {
         <h2 className="text-sm font-semibold text-gray-700">Compartilhar ocorrência</h2>
       </div>
       <div className="flex gap-2">
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={handleWhatsApp}
           className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
           WhatsApp
-        </a>
+        </button>
         <button
           onClick={handleCopy}
           className="flex-1 flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
