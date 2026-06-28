@@ -13,14 +13,19 @@ interface Props {
 export function ShareButtons({ path, title, address }: Props) {
   const [copied, setCopied] = useState(false)
 
+  const getFullUrl = () => {
+    const origin = window.location.origin || process.env.NEXT_PUBLIC_APP_URL || ''
+    return `${origin}${path}`
+  }
+
   const handleWhatsApp = () => {
-    const fullUrl = `${window.location.origin}${path}`
+    const fullUrl = getFullUrl()
     const text = encodeURIComponent(`🚨 *${title}*\n📍 ${address}\n\nVeja no correAquiPrefeito: ${fullUrl}`)
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(`${window.location.origin}${path}`)
+    await navigator.clipboard.writeText(getFullUrl())
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
