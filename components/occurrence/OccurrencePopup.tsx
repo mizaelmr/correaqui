@@ -58,14 +58,16 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
         )}
       </div>
 
-      <Button
-        id="btn-ver-detalhe"
-        size="sm"
-        className="w-full mt-2 h-7 text-xs"
-        onClick={() => openOccurrenceModal(occurrence)}
-      >
-        Ver detalhes
-      </Button>
+      <div className="w-full mt-2">
+        <Button
+          id="btn-ver-detalhe"
+          size="sm"
+          className="w-full h-7 text-xs flex"
+          onClick={() => openOccurrenceModal(occurrence)}
+        >
+          Ver detalhes
+        </Button>
+      </div>
     </div>
   )
 }
