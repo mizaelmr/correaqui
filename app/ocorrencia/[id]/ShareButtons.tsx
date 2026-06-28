@@ -14,7 +14,7 @@ export function ShareButtons({ path, title, address }: Props) {
   const [copied, setCopied] = useState(false)
 
   const getFullUrl = () => {
-    const origin = window.location.origin || process.env.NEXT_PUBLIC_APP_URL || ''
+    const origin = window.location.origin || process.env.NEXT_PUBLIC_APP_URL
     return `${origin}${path}`
   }
 
