@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import bcrypt from 'bcryptjs'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
 const prisma = new PrismaClient({ adapter })
@@ -7,9 +8,24 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('Seeding database...')
 
+  // Always upsert admin user
+  const adminHash = await bcrypt.hash('admin123', 10)
+  await prisma.user.upsert({
+    where: { email: 'admin@admin.com' },
+    update: { role: 'ADMIN' },
+    create: {
+      id: 'admin-correaqui-0001',
+      name: 'Administrador',
+      email: 'admin@admin.com',
+      password: adminHash,
+      role: 'ADMIN',
+    },
+  })
+  console.log('Admin user ready: admin@admin.com / admin123')
+
   const existing = await prisma.occurrence.count()
   if (existing > 0) {
-    console.log(`Skipping seed: ${existing} occurrences already exist.`)
+    console.log(`Skipping occurrences seed: ${existing} already exist.`)
     return
   }
 
