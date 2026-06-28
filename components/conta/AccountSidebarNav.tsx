@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, List, Settings, LogOut } from 'lucide-react'
+import { User, List, Settings, LogOut, LayoutDashboard } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 
@@ -13,11 +13,12 @@ const navItems = [
 ]
 
 interface AccountSidebarNavProps {
-  user: { name?: string | null; email?: string | null; image?: string | null }
+  user: { name?: string | null; email?: string | null; image?: string | null; role?: string | null }
 }
 
 export function AccountSidebarNav({ user }: AccountSidebarNavProps) {
   const pathname = usePathname()
+  const isAdmin = user.role === 'ADMIN' || user.role === 'PREFEITURA'
 
   return (
     <aside className="w-full md:w-56 shrink-0">
@@ -29,8 +30,26 @@ export function AccountSidebarNav({ user }: AccountSidebarNavProps) {
           </div>
           <p className="font-medium text-sm text-gray-900 truncate">{user.name}</p>
           <p className="text-xs text-gray-400 truncate">{user.email}</p>
+          {user.role && user.role !== 'CIDADAO' && (
+            <span className="mt-1.5 inline-block text-xs bg-blue-100 text-blue-700 font-medium px-2 py-0.5 rounded-full">
+              {user.role}
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Painel Admin — destaque */}
+      {isAdmin && (
+        <div className="mb-2">
+          <Link
+            href="/admin"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-3 py-2.5 rounded-xl text-xs md:text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors w-full justify-center md:justify-start"
+          >
+            <LayoutDashboard className="w-4 h-4 shrink-0" />
+            <span className="leading-tight">Painel Admin</span>
+          </Link>
+        </div>
+      )}
 
       {/* Nav */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

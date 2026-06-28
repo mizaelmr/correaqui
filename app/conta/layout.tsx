@@ -28,7 +28,7 @@ export default async function ContaLayout({ children }: { children: React.ReactN
       </header>
 
       <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6">
-        <AccountSidebarNav user={session.user} />
+        <AccountSidebarNav user={{ ...session.user, role: (session.user as { role?: string }).role }} />
         <main className="flex-1 min-w-0">{children}</main>
       </div>
     </div>
