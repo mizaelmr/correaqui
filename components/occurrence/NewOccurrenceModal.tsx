@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Upload, X, Loader2, MapPin, AlertCircle, LogIn, Search } from 'lucide-react'
+import { Upload, X, Loader2, MapPin, AlertCircle, LogIn, Search, Camera } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -367,9 +367,21 @@ export function NewOccurrenceModal() {
                   </button>
                 </div>
               ))}
+              <label className="h-16 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors sm:hidden">
+                <Camera className="w-4 h-4 text-gray-400" />
+                <span className="text-xs text-gray-400 mt-0.5">Câmera</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFilesChange}
+                />
+              </label>
               <label className="h-16 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
                 <Upload className="w-4 h-4 text-gray-400" />
-                <span className="text-xs text-gray-400 mt-0.5">Foto</span>
+                <span className="text-xs text-gray-400 mt-0.5 sm:hidden">Galeria</span>
+                <span className="text-xs text-gray-400 mt-0.5 hidden sm:block">Foto</span>
                 <input
                   type="file"
                   multiple

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Upload, X, Loader2 } from 'lucide-react'
+import { Upload, X, Loader2, Camera } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -108,9 +108,21 @@ export function ResolutionModal({ occurrenceId, open, onClose }: ResolutionModal
                   </button>
                 </div>
               ))}
+              <label className="h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors sm:hidden">
+                <Camera className="w-5 h-5 text-gray-400" />
+                <span className="text-xs text-gray-400 mt-1">Câmera</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFilesChange}
+                />
+              </label>
               <label className="h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
                 <Upload className="w-5 h-5 text-gray-400" />
-                <span className="text-xs text-gray-400 mt-1">Adicionar</span>
+                <span className="text-xs text-gray-400 mt-1 sm:hidden">Galeria</span>
+                <span className="text-xs text-gray-400 mt-1 hidden sm:block">Adicionar</span>
                 <input
                   type="file"
                   multiple
