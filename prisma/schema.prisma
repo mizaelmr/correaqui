@@ -32,6 +32,12 @@ enum OccurrenceStatus {
   RESOLVIDA
 }
 
+enum UserRole {
+  CIDADAO
+  PREFEITURA
+  ADMIN
+}
+
 enum TimelineEventType {
   CRIADA
   FOTOS_ADICIONADAS
@@ -48,6 +54,7 @@ model User {
   phone         String?
   image         String?
   password      String?
+  role          UserRole  @default(CIDADAO)
   emailVerified DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

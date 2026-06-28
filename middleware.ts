@@ -6,7 +6,19 @@ const { auth } = NextAuth(authConfig)
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth
+  const role = (req.auth?.user as { role?: string } | undefined)?.role
   const { pathname } = req.nextUrl
+
+  if (pathname.startsWith('/admin')) {
+    if (!isLoggedIn) {
+      const loginUrl = new URL('/login', req.url)
+      loginUrl.searchParams.set('callbackUrl', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+    if (role !== 'ADMIN' && role !== 'PREFEITURA') {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
+  }
 
   if (pathname.startsWith('/conta') && !isLoggedIn) {
     const loginUrl = new URL('/login', req.url)
@@ -22,5 +34,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ['/conta/:path*', '/login', '/cadastro'],
+  matcher: ['/admin/:path*', '/conta/:path*', '/login', '/cadastro'],
 }
