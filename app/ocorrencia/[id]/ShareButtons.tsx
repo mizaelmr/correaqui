@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Share2, Copy, Check, MessageCircle } from 'lucide-react'
 
 interface Props {
@@ -11,15 +11,19 @@ interface Props {
 
 export function ShareButtons({ path, title, address }: Props) {
   const [copied, setCopied] = useState(false)
+  const [origin, setOrigin] = useState('')
 
-  const url = typeof window !== 'undefined' ? `${window.location.origin}${path}` : path
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
+
+  const url = origin ? `${origin}${path}` : path
 
   const waText = encodeURIComponent(`🚨 *${title}*\n📍 ${address}\n\nVeja no correAquiPrefeito: ${url}`)
   const waUrl = `https://wa.me/?text=${waText}`
 
   const handleCopy = async () => {
-    const fullUrl = `${window.location.origin}${path}`
-    await navigator.clipboard.writeText(fullUrl)
+    await navigator.clipboard.writeText(`${window.location.origin}${path}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
