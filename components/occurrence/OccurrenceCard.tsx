@@ -87,6 +87,7 @@ export function OccurrenceCard({ occurrence: o }: OccurrenceCardProps) {
 
       <div className="mt-2.5 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
         <button
+          id="btn-ver-detalhe"
           onClick={handleDetailsClick}
           className="flex-1 flex items-center justify-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 rounded-md py-1.5 transition-colors"
         >

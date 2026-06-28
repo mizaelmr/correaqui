@@ -1,7 +1,8 @@
 'use client'
 
+import { Check, Copy, MessageCircle, Share2 } from 'lucide-react'
+
 import { useState } from 'react'
-import { Share2, Copy, Check, MessageCircle } from 'lucide-react'
 
 interface Props {
   path: string
@@ -32,6 +33,7 @@ export function ShareButtons({ path, title, address }: Props) {
       </div>
       <div className="flex gap-2">
         <button
+          id="btn-whatsapp"
           onClick={handleWhatsApp}
           className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
         >
@@ -39,6 +41,7 @@ export function ShareButtons({ path, title, address }: Props) {
           WhatsApp
         </button>
         <button
+          id="btn-copiar-link"
           onClick={handleCopy}
           className="flex-1 flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
         >
