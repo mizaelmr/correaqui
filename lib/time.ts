@@ -4,6 +4,7 @@ import { TIME_BANDS } from './constants'
 
 export function formatTimeAgo(date: string | Date): string {
   return formatDistanceToNow(new Date(date), { addSuffix: true, locale: ptBR })
+    .replace('cerca de ', '')
 }
 
 export function getDaysSince(date: string | Date): number {
