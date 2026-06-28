@@ -40,14 +40,14 @@ export function AccountSidebarNav({ user }: AccountSidebarNavProps) {
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors flex-1 md:flex-none justify-center md:justify-start',
+                'flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm transition-colors flex-1 md:flex-none justify-center md:justify-start',
                 pathname === href
                   ? 'bg-blue-50 text-blue-700 font-medium'
                   : 'text-gray-600 hover:bg-gray-50'
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
-              <span className="hidden md:inline truncate">{label}</span>
+              <span className="truncate text-center md:text-left leading-tight">{label}</span>
             </Link>
           ))}
         </nav>
@@ -55,10 +55,10 @@ export function AccountSidebarNav({ user }: AccountSidebarNavProps) {
         <div className="p-2 border-t border-gray-100">
           <button
             onClick={() => signOut({ callbackUrl: '/' })}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-red-500 hover:bg-red-50 w-full transition-colors justify-center md:justify-start"
+            className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-3 py-2 rounded-lg text-xs md:text-sm text-red-500 hover:bg-red-50 w-full transition-colors justify-center md:justify-start"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            <span className="hidden md:inline">Sair</span>
+            <span className="leading-tight">Sair</span>
           </button>
         </div>
       </div>
