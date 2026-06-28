@@ -29,10 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const o = await getOccurrence(id)
   if (!o) return { title: 'Ocorrência não encontrada' }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const image = o.photos[0]?.url
-    ? `${appUrl}${o.photos[0].url}`
-    : undefined
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  const image = o.photos[0]?.url ?? undefined
 
   return {
     title: `${o.title} — correAquiPrefeito`,
@@ -40,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: o.title,
       description: `${o.address} · ${CATEGORY_LABELS[o.category as Category]} · ${SEVERITY_LABELS[o.severity as Severity]}`,
-      url: `${appUrl}/ocorrencia/${id}`,
+      url: appUrl ? `${appUrl}/ocorrencia/${id}` : undefined,
       images: image ? [{ url: image, width: 1200, height: 630, alt: o.title }] : [],
       type: 'article',
       locale: 'pt_BR',
@@ -73,8 +71,7 @@ export default async function OcorrenciaPage({ params }: Props) {
   const o = await getOccurrence(id)
   if (!o) notFound()
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const shareUrl = `${appUrl}/ocorrencia/${id}`
+  const sharePath = `/ocorrencia/${id}`
 
   return (
     <div className="h-full overflow-y-auto bg-gray-50">
@@ -191,7 +188,7 @@ export default async function OcorrenciaPage({ params }: Props) {
         )}
 
         {/* Compartilhar */}
-        <ShareButtons url={shareUrl} title={o.title} address={o.address} />
+        <ShareButtons path={sharePath} title={o.title} address={o.address} />
 
         {/* CTA */}
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 text-center">
