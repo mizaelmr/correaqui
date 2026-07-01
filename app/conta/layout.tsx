@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { MapPin, User, List, Settings, ChevronLeft } from 'lucide-react'
+import { TrafficCone, User, List, Settings, ChevronLeft } from 'lucide-react'
 import { AccountSidebarNav } from '@/components/conta/AccountSidebarNav'
 
 export default async function ContaLayout({ children }: { children: React.ReactNode }) {
@@ -13,9 +13,9 @@ export default async function ContaLayout({ children }: { children: React.ReactN
       <header className="bg-white border-b border-gray-200 h-14 flex items-center px-4 gap-3">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-600">
-            <MapPin className="w-4 h-4 text-white" />
+            <TrafficCone className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-gray-900">CorreAqui</span>
+          <span className="font-bold text-gray-900">CORRE AQUI PREFEITO</span>
         </Link>
         <span className="text-gray-300 text-lg">/</span>
         <span className="text-sm text-gray-500">Minha Conta</span>

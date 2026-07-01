@@ -7,6 +7,7 @@ export type Category =
   | 'ESGOTO'
   | 'ARVORE_CAIDA'
   | 'OBRA_ABANDONADA'
+  | 'FALTA_PAVIMENTACAO'
   | 'OUTRO'
 
 export type Severity = 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA'
@@ -56,6 +57,7 @@ export interface Occurrence {
   reporterName?: string | null
   reporterPhone?: string | null
   confirmations: number
+  showReporter: boolean
   userId?: string | null
   photos: Photo[]
   timeline: TimelineEvent[]
@@ -76,6 +78,7 @@ export interface CreateOccurrenceInput {
   state?: string
   reporterName?: string
   reporterPhone?: string
+  showReporter?: boolean
   photos: string[]
 }
 

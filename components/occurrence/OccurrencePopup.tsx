@@ -1,12 +1,16 @@
 'use client'
 
-import { MapPin, AlertCircle, Clock, CheckCircle } from 'lucide-react'
+import { MapPin, CheckCircle, ThumbsUp, CheckCheck, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SeverityBadge } from '@/components/shared/SeverityBadge'
 import { CategoryIcon } from '@/components/shared/CategoryIcon'
 import { TimeIndicator } from '@/components/shared/TimeIndicator'
 import { useOccurrencesStore } from '@/store/occurrences'
+import { useConfirmOccurrence } from '@/hooks/useOccurrences'
 import { CATEGORY_LABELS } from '@/lib/constants'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import type { Occurrence } from '@/types'
 
 interface OccurrencePopupProps {
@@ -15,6 +19,32 @@ interface OccurrencePopupProps {
 
 export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
   const openOccurrenceModal = useOccurrencesStore((s) => s.openOccurrenceModal)
+  const { data: session } = useSession()
+  const isOwner = !!session && session.user?.id === occurrence.userId
+  const router = useRouter()
+  const confirmMutation = useConfirmOccurrence()
+
+  const handleConfirm = async () => {
+    if (!session) {
+      router.push('/login')
+      return
+    }
+    try {
+      await confirmMutation.mutateAsync(occurrence.id)
+      toast.success('Obrigado! Ocorrência confirmada.')
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : ''
+      toast.error(msg.includes('409') ? 'Você já confirmou esta ocorrência.' : 'Erro ao confirmar.')
+    }
+  }
+
+  const handleResolved = () => {
+    if (!session) {
+      router.push('/login')
+      return
+    }
+    openOccurrenceModal(occurrence)
+  }
 
   return (
     <div className="p-3 pt-8 min-w-[260px]">
@@ -58,15 +88,44 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
         )}
       </div>
 
-      <div className="w-full mt-2">
+      <div className="mt-3 space-y-1.5">
         <Button
           id="btn-ver-detalhe"
           size="sm"
-          className="w-full h-7 text-xs flex"
+          className="w-full h-7 text-xs"
           onClick={() => openOccurrenceModal(occurrence)}
         >
           Ver detalhes
         </Button>
+
+        {occurrence.status !== 'RESOLVIDA' && occurrence.status !== 'AGUARDANDO_VALIDACAO' && (
+          <div className="flex gap-1.5">
+            <Button
+              size="sm"
+              className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
+              onClick={handleConfirm}
+              disabled={confirmMutation.isPending || isOwner}
+              title={isOwner ? 'Você registrou esta ocorrência' : undefined}
+            >
+              {confirmMutation.isPending ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+              ) : (
+                <ThumbsUp className="w-3.5 h-3.5 mr-1" />
+              )}
+              Confirmar
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 h-8 text-xs border-green-200 text-green-700 hover:bg-green-50"
+              onClick={handleResolved}
+            >
+              <CheckCheck className="w-3.5 h-3.5 mr-1" />
+              Já resolvido
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )

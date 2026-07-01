@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { TrafficCone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useOccurrencesStore } from '@/store/occurrences'
 
@@ -14,8 +14,8 @@ export function FloatingButton() {
         size="lg"
         className="rounded-full shadow-lg hover:shadow-xl transition-all gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 h-12"
       >
-        <Plus className="w-5 h-5" />
-        <span className="font-semibold">Registrar Ocorrência</span>
+        <TrafficCone className="w-5 h-5" />
+        <span className="font-semibold">Nova Ocorrência</span>
       </Button>
     </div>
   )

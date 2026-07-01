@@ -15,6 +15,7 @@ enum Category {
   ESGOTO
   ARVORE_CAIDA
   OBRA_ABANDONADA
+  FALTA_PAVIMENTACAO
   OUTRO
 }
 
@@ -89,7 +90,8 @@ model Occurrence {
   state         String?
   reporterName  String?
   reporterPhone String?
-  confirmations Int              @default(0)
+  confirmations  Int              @default(0)
+  showReporter   Boolean          @default(false)
   userId        String?
   user          User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   photos        Photo[]

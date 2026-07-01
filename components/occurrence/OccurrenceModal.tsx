@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { X, MapPin, Calendar, RefreshCw, CheckCircle, ThumbsUp, Share2, MessageCircle, Copy, Check } from 'lucide-react'
+import { X, MapPin, Calendar, RefreshCw, CheckCircle, ThumbsUp, Share2, MessageCircle, Copy, Check, Pencil, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -15,17 +15,22 @@ import { CategoryIcon } from '@/components/shared/CategoryIcon'
 import { TimeIndicator } from '@/components/shared/TimeIndicator'
 import { ResolutionModal } from './ResolutionModal'
 import { useOccurrencesStore } from '@/store/occurrences'
-import { useConfirmOccurrence } from '@/hooks/useOccurrences'
+import { useConfirmOccurrence, useOccurrences } from '@/hooks/useOccurrences'
+import { useQueryClient } from '@tanstack/react-query'
 import { CATEGORY_LABELS } from '@/lib/constants'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
 
 export function OccurrenceModal() {
-  const { isOccurrenceModalOpen, selectedOccurrence, closeOccurrenceModal } = useOccurrencesStore()
+  const { isOccurrenceModalOpen, selectedOccurrence, closeOccurrenceModal, setSelectedOccurrence } = useOccurrencesStore()
   const [showResolution, setShowResolution] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [editingDesc, setEditingDesc] = useState(false)
+  const [descValue, setDescValue] = useState('')
+  const [savingDesc, setSavingDesc] = useState(false)
   const confirmMutation = useConfirmOccurrence()
+  const qc = useQueryClient()
   const { data: session } = useSession()
   const router = useRouter()
 
@@ -35,12 +40,39 @@ export function OccurrenceModal() {
   const isLoggedIn = !!session
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/ocorrencia/${o.id}`
-  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no correAquiPrefeito: ${shareUrl}`)
+  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no CORRE AQUI PREFEITO: ${shareUrl}`)
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleEditDesc = () => {
+    setDescValue(o.description)
+    setEditingDesc(true)
+  }
+
+  const handleSaveDesc = async () => {
+    if (!descValue.trim() || descValue === o.description) { setEditingDesc(false); return }
+    setSavingDesc(true)
+    try {
+      const res = await fetch(`/api/occurrences/${o.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: descValue.trim() }),
+      })
+      if (!res.ok) throw new Error()
+      const updated = await res.json()
+      setSelectedOccurrence(updated)
+      qc.invalidateQueries({ queryKey: ['occurrences'] })
+      toast.success('Descrição atualizada.')
+      setEditingDesc(false)
+    } catch {
+      toast.error('Erro ao salvar.')
+    } finally {
+      setSavingDesc(false)
+    }
   }
 
   const handleConfirm = async () => {
@@ -129,7 +161,49 @@ export function OccurrenceModal() {
               <TimeIndicator date={o.createdAt} showBar />
 
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-sm text-gray-700 leading-relaxed">{o.description}</p>
+                {editingDesc ? (
+                  <div className="space-y-2">
+                    <textarea
+                      className="w-full text-sm text-gray-700 bg-white border border-blue-300 rounded-md p-2 resize-none focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      rows={4}
+                      value={descValue}
+                      onChange={(e) => setDescValue(e.target.value)}
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSaveDesc}
+                        disabled={savingDesc}
+                        className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                      >
+                        {savingDesc ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingDesc(false)}
+                        className="px-3 py-1 text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-100 rounded-md"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm text-gray-700 leading-relaxed">{o.description}</p>
+                    {isAuthor && (
+                      <button
+                        type="button"
+                        onClick={handleEditDesc}
+                        className="shrink-0 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="Editar descrição"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

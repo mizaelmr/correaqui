@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { CATEGORY_LABELS, SEVERITY_LABELS, STATUS_LABELS } from '@/lib/constants'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { MapPin, Calendar, ThumbsUp, ArrowLeft, CheckCircle } from 'lucide-react'
+import { MapPin, Calendar, ThumbsUp, ArrowLeft, CheckCircle, TrafficCone } from 'lucide-react'
 import { ShareButtons } from './ShareButtons'
 import type { Category, Severity, OccurrenceStatus } from '@/types'
 
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const image = o.photos[0]?.url ?? undefined
 
   return {
-    title: `${o.title} — correAquiPrefeito`,
+    title: `${o.title} — CORRE AQUI PREFEITO`,
     description: o.description,
     openGraph: {
       title: o.title,
@@ -80,9 +80,9 @@ export default async function OcorrenciaPage({ params }: Props) {
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
-              <MapPin className="w-4 h-4 text-white" />
+              <TrafficCone className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900">correAquiPrefeito</span>
+            <span className="font-bold text-gray-900">CORRE AQUI PREFEITO</span>
           </Link>
           <span className="text-gray-300">·</span>
           <Link href="/" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
@@ -146,7 +146,7 @@ export default async function OcorrenciaPage({ params }: Props) {
                 <p className="text-sm font-medium text-gray-700">{o.confirmations}</p>
               </div>
             </div>
-            {o.user && (
+            {o.user && o.showReporter && (
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>

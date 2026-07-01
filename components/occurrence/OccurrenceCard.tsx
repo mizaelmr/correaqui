@@ -22,7 +22,7 @@ export function OccurrenceCard({ occurrence: o }: OccurrenceCardProps) {
   const isSelected = selectedOccurrence?.id === o.id
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
   const shareUrl = `${appUrl}/ocorrencia/${o.id}`
-  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no correAquiPrefeito: ${shareUrl}`)
+  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no CORRE AQUI PREFEITO: ${shareUrl}`)
 
   const handleClick = () => {
     setSelectedOccurrence(o)
