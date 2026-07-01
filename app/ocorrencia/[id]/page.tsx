@@ -93,14 +93,22 @@ export default async function OcorrenciaPage({ params }: Props) {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-4">
-        {/* Foto principal */}
+        {/* Mídia principal */}
         {o.photos.length > 0 && (
-          <div className="rounded-xl overflow-hidden aspect-video bg-gray-200">
-            <img
-              src={o.photos[0].url}
-              alt={o.title}
-              className="w-full h-full object-cover"
-            />
+          <div className="rounded-xl overflow-hidden aspect-video bg-gray-900">
+            {o.photos[0].type === 'video' ? (
+              <video
+                src={o.photos[0].url}
+                controls
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src={o.photos[0].url}
+                alt={o.title}
+                className="w-full h-full object-cover"
+              />
+            )}
           </div>
         )}
 

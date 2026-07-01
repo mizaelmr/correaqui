@@ -51,10 +51,10 @@ export async function requestResolution(
   return res.json()
 }
 
-export async function uploadPhoto(file: File): Promise<{ url: string }> {
+export async function uploadMedia(file: File): Promise<{ url: string; type: 'image' | 'video' }> {
   const formData = new FormData()
   formData.append('file', file)
   const res = await fetch('/api/upload', { method: 'POST', body: formData })
-  if (!res.ok) throw new Error('Erro ao fazer upload da foto')
+  if (!res.ok) throw new Error('Erro ao fazer upload')
   return res.json()
 }

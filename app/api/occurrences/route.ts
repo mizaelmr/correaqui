@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         showReporter: showReporter ?? false,
         userId: session.user.id,
         photos: {
-          create: (photos as string[]).map((url: string) => ({ url })),
+          create: (photos as { url: string; type: string }[]).map(({ url, type }) => ({ url, type: type ?? 'image' })),
         },
         timeline: {
           create: [{ type: 'CRIADA', description: 'Ocorrência registrada pela comunidade.' }],

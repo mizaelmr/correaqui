@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Upload, X, Loader2, MapPin, AlertCircle, LogIn, Search, Camera } from 'lucide-react'
+import { Upload, X, Loader2, MapPin, AlertCircle, LogIn, Search, Camera, Video } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -18,7 +18,7 @@ import { useOccurrencesStore } from '@/store/occurrences'
 import { useCreateOccurrence } from '@/hooks/useOccurrences'
 import { useGeolocation } from '@/hooks/useGeolocation'
 import { useReverseGeocode } from '@/hooks/useReverseGeocode'
-import { uploadPhoto } from '@/services/occurrences'
+import { uploadMedia } from '@/services/occurrences'
 import { CATEGORY_LABELS, SEVERITY_LABELS } from '@/lib/constants'
 import { toast } from 'sonner'
 import type { Category, Severity } from '@/types'
@@ -46,7 +46,7 @@ export function NewOccurrenceModal() {
   const searchFilter = useOccurrencesStore((s) => s.filters.search)
   const { data: session } = useSession()
   const router = useRouter()
-  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([])
+  const [photos, setPhotos] = useState<{ file: File; preview: string; mediaType: 'image' | 'video' }[]>([])
   const [uploading, setUploading] = useState(false)
   const [showReporter, setShowReporter] = useState(false)
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
@@ -164,10 +164,36 @@ export function NewOccurrenceModal() {
     }
   }
 
-  const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>, forceType?: 'image' | 'video') => {
     const files = Array.from(e.target.files ?? [])
-    const newPhotos = files.map((file) => ({ file, preview: URL.createObjectURL(file) }))
-    setPhotos((prev) => [...prev, ...newPhotos])
+    e.target.value = ''
+
+    for (const file of files) {
+      const mediaType = forceType ?? (file.type.startsWith('video/') ? 'video' : 'image')
+      const hasVideo = photos.some((p) => p.mediaType === 'video') || mediaType === 'video'
+
+      if (mediaType === 'video') {
+        if (photos.some((p) => p.mediaType === 'video')) {
+          toast.error('Só é permitido 1 vídeo por ocorrência.')
+          return
+        }
+        if (photos.filter((p) => p.mediaType === 'image').length >= 1) {
+          toast.error('Com vídeo, só é permitida 1 foto.')
+          return
+        }
+      } else {
+        if (hasVideo && photos.filter((p) => p.mediaType === 'image').length >= 1) {
+          toast.error('Com vídeo, só é permitida 1 foto.')
+          return
+        }
+        if (!hasVideo && photos.filter((p) => p.mediaType === 'image').length >= 4) {
+          toast.error('Máximo de 4 fotos por ocorrência.')
+          return
+        }
+      }
+
+      setPhotos((prev) => [...prev, { file, preview: URL.createObjectURL(file), mediaType }])
+    }
   }
 
   const removePhoto = (index: number) => {
@@ -200,10 +226,10 @@ export function NewOccurrenceModal() {
 
     setUploading(true)
     try {
-      const uploadedUrls: string[] = []
+      const uploadedMedia: { url: string; type: string }[] = []
       for (const p of photos) {
-        const result = await uploadPhoto(p.file)
-        uploadedUrls.push(result.url)
+        const result = await uploadMedia(p.file)
+        uploadedMedia.push({ url: result.url, type: result.type })
       }
 
       const categoryLabels: Record<string, string> = CATEGORY_LABELS
@@ -221,7 +247,7 @@ export function NewOccurrenceModal() {
         city: addressInfo?.city,
         state: addressInfo?.state,
         showReporter,
-        photos: uploadedUrls,
+        photos: uploadedMedia,
       })
 
       toast.success('Ocorrência registrada com sucesso!')
@@ -402,12 +428,21 @@ export function NewOccurrenceModal() {
 
           <div>
             <Label className="text-sm font-medium mb-1.5 block">
-              Fotos <span className="text-red-500">*</span>
+              Fotos / Vídeo <span className="text-red-500">*</span>
+              <span className="ml-1 text-xs text-gray-400 font-normal">
+                {photos.some((p) => p.mediaType === 'video') ? '(1 vídeo + 1 foto)' : '(máx. 4 fotos)'}
+              </span>
             </Label>
             <div className="grid grid-cols-4 gap-2">
               {photos.map((p, i) => (
                 <div key={i} className="relative">
-                  <img src={p.preview} alt="" className="w-full h-16 object-cover rounded-lg" />
+                  {p.mediaType === 'video' ? (
+                    <div className="w-full h-16 bg-gray-900 rounded-lg flex items-center justify-center">
+                      <Video className="w-5 h-5 text-white" />
+                    </div>
+                  ) : (
+                    <img src={p.preview} alt="" className="w-full h-16 object-cover rounded-lg" />
+                  )}
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
@@ -425,7 +460,7 @@ export function NewOccurrenceModal() {
                   accept="image/*"
                   capture
                   className="hidden"
-                  onChange={handleFilesChange}
+                  onChange={(e) => handleFilesChange(e, 'image')}
                 />
               </label>
               <label className="h-16 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
@@ -437,9 +472,21 @@ export function NewOccurrenceModal() {
                   multiple
                   accept="image/*"
                   className="hidden"
-                  onChange={handleFilesChange}
+                  onChange={(e) => handleFilesChange(e, 'image')}
                 />
               </label>
+              {!photos.some((p) => p.mediaType === 'video') && (
+                <label className="h-16 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 transition-colors">
+                  <Video className="w-4 h-4 text-gray-400" />
+                  <span className="text-xs text-gray-400 mt-0.5">Vídeo</span>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm"
+                    className="hidden"
+                    onChange={(e) => handleFilesChange(e, 'video')}
+                  />
+                </label>
+              )}
             </div>
           </div>
 

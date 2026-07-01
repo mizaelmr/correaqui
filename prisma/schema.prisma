@@ -121,6 +121,7 @@ model Confirmation {
 model Photo {
   id           String     @id @default(cuid())
   url          String
+  type         String     @default("image")
   occurrence   Occurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
   occurrenceId String
   createdAt    DateTime   @default(now())
