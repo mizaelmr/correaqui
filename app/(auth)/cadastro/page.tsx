@@ -69,7 +69,7 @@ export default function CadastroPage() {
       return
     }
 
-    toast.success('Conta criada com sucesso! Bem-vindo ao CorreAqui!')
+    toast.success('Conta criada com sucesso! Bem-vindo ao CORRE AQUI PREFEITO!')
     router.push('/')
     router.refresh()
   }
@@ -87,7 +87,7 @@ export default function CadastroPage() {
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-1">Criar conta</h1>
-      <p className="text-sm text-gray-500 mb-6">Junte-se à comunidade CorreAqui</p>
+      <p className="text-sm text-gray-500 mb-6">Junte-se à comunidade CORRE AQUI PREFEITO</p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Field id="name" label="Nome completo" error={errors.name?.message}>

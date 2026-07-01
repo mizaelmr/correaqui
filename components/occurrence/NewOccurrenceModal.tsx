@@ -37,38 +37,83 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+const PETROLINA_DEFAULT: [number, number] = [-9.3974, -40.5014]
+
 export function NewOccurrenceModal() {
   const { isNewOccurrenceModalOpen, closeNewOccurrenceModal } = useOccurrencesStore()
+  const mapCenterFromStore = useOccurrencesStore((s) => s.mapCenter)
+  const mapZoomFromStore = useOccurrencesStore((s) => s.mapZoom)
+  const searchFilter = useOccurrencesStore((s) => s.filters.search)
   const { data: session } = useSession()
   const router = useRouter()
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(undefined)
+  const [miniMapZoom, setMiniMapZoom] = useState(16)
   const suppressAddressSync = useRef(false)
   const fwdGeoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Ref keeps the current searchFilter accessible inside effects without stale closure
+  const searchFilterRef = useRef(searchFilter)
+  useEffect(() => { searchFilterRef.current = searchFilter }, [searchFilter])
 
   const createMutation = useCreateOccurrence()
-  const { location, loading: geoLoading, getLocation } = useGeolocation()
+  const { location, error: geoError, loading: geoLoading, getLocation } = useGeolocation()
   const { geocode, addressInfo, loading: geocodeLoading } = useReverseGeocode()
 
   const { register, handleSubmit, formState: { errors }, reset, control, setValue, watch } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
-  useEffect(() => {
-    if (isNewOccurrenceModalOpen) {
-      getLocation()
-    }
-  }, [isNewOccurrenceModalOpen])
+  const applyStoreCenter = useCallback((center: [number, number], zoom: number) => {
+    setMarkerPos(center)
+    setMapCenter(center)
+    setMiniMapZoom(zoom)
+    geocode(center[0], center[1])
+  }, [geocode])
 
   useEffect(() => {
-    if (location) {
+    if (!isNewOccurrenceModalOpen) return
+
+    if (searchFilterRef.current) {
+      // Home search active: never call getLocation(). If the store center is already
+      // available, apply it now; otherwise the effect below handles the race condition
+      // when MapView's async geocode resolves after the modal opens.
+      if (mapCenterFromStore) {
+        applyStoreCenter(mapCenterFromStore, mapZoomFromStore ?? 13)
+      }
+    } else {
+      getLocation()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNewOccurrenceModalOpen])
+
+  // Race-condition guard: mapCenterFromStore arrives after modal opens (MapView geocode is async)
+  useEffect(() => {
+    if (!isNewOccurrenceModalOpen || !searchFilter || !mapCenterFromStore || markerPos) return
+    applyStoreCenter(mapCenterFromStore, mapZoomFromStore ?? 13)
+  }, [mapCenterFromStore, isNewOccurrenceModalOpen, searchFilter, markerPos, mapZoomFromStore, applyStoreCenter])
+
+  // Geolocation success: uses ref to avoid stale closure — never overrides home search
+  useEffect(() => {
+    if (location && !searchFilterRef.current) {
       const pos: [number, number] = [location.latitude, location.longitude]
       setMarkerPos(pos)
+      setMiniMapZoom(16)
       geocode(location.latitude, location.longitude)
     }
   }, [location])
+
+  // Geolocation failure: fall back to store center or Petrolina
+  useEffect(() => {
+    if (geoError && !markerPos) {
+      const fallback: [number, number] = mapCenterFromStore ?? PETROLINA_DEFAULT
+      setMarkerPos(fallback)
+      setMapCenter(fallback)
+      setMiniMapZoom(mapCenterFromStore ? (mapZoomFromStore ?? 13) : 13)
+      geocode(fallback[0], fallback[1])
+    }
+  }, [geoError])
 
   useEffect(() => {
     if (addressInfo?.address && !suppressAddressSync.current) {
@@ -106,6 +151,7 @@ export function NewOccurrenceModal() {
         suppressAddressSync.current = true
         setMarkerPos(coords)
         setMapCenter(coords)
+        setMiniMapZoom(16)
         geocode(coords[0], coords[1])
       } else {
         toast.error('Endereço não encontrado. Tente ser mais específico.')
@@ -135,6 +181,7 @@ export function NewOccurrenceModal() {
     setPhotos([])
     setMarkerPos(null)
     setMapCenter(undefined)
+    setMiniMapZoom(16)
     if (fwdGeoTimer.current) clearTimeout(fwdGeoTimer.current)
     closeNewOccurrenceModal()
   }
@@ -311,7 +358,7 @@ export function NewOccurrenceModal() {
                 <span className="ml-2 text-sm text-gray-400">Obtendo localização...</span>
               </div>
             ) : markerPos ? (
-              <MiniMap position={markerPos} center={mapCenter} onMarkerMove={handleMarkerMove} />
+              <MiniMap position={markerPos} center={mapCenter} zoom={miniMapZoom} onMarkerMove={handleMarkerMove} />
             ) : (
               <div className="h-48 bg-gray-100 rounded-lg flex items-center justify-center text-sm text-gray-400">
                 <AlertCircle className="w-4 h-4 mr-1.5" />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, MapPin, X, Menu } from 'lucide-react'
+import { Search, TrafficCone, X, Menu } from 'lucide-react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { useOccurrencesStore } from '@/store/occurrences'
@@ -42,9 +42,9 @@ export function Header() {
 
         <Link href="/" className="flex items-center gap-2 shrink-0 hover:opacity-80 transition-opacity">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600">
-            <MapPin className="w-5 h-5 text-white" />
+            <TrafficCone className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-lg text-gray-900 hidden sm:block">correAquiPrefeito</span>
+          <span className="font-bold text-lg text-gray-900 hidden sm:block">CORRE AQUI PREFEITO</span>
         </Link>
 
         <div className="flex-1 relative">

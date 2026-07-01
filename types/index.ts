@@ -7,6 +7,7 @@ export type Category =
   | 'ESGOTO'
   | 'ARVORE_CAIDA'
   | 'OBRA_ABANDONADA'
+  | 'FALTA_PAVIMENTACAO'
   | 'OUTRO'
 
 export type Severity = 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA'

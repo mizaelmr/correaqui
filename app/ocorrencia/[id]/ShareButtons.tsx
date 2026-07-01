@@ -20,7 +20,7 @@ export function ShareButtons({ path, title, address }: Props) {
 
   const handleWhatsApp = () => {
     const fullUrl = getFullUrl()
-    const text = encodeURIComponent(`🚨 *${title}*\n📍 ${address}\n\nVeja no correAquiPrefeito: ${fullUrl}`)
+    const text = encodeURIComponent(`🚨 *${title}*\n📍 ${address}\n\nVeja no CORRE AQUI PREFEITO: ${fullUrl}`)
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
 

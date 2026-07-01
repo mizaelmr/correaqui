@@ -35,7 +35,7 @@ export function OccurrenceModal() {
   const isLoggedIn = !!session
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/ocorrencia/${o.id}`
-  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no correAquiPrefeito: ${shareUrl}`)
+  const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no CORRE AQUI PREFEITO: ${shareUrl}`)
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl)

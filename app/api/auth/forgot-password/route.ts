@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     // Em produção: enviar e-mail com resetUrl via nodemailer
     // Por ora, logamos para desenvolvimento
-    console.log(`[CorreAqui] Link de redefinição para ${email}: ${resetUrl}`)
+    console.log(`[CORRE AQUI PREFEITO] Link de redefinição para ${email}: ${resetUrl}`)
 
     return NextResponse.json({ ok: true })
   } catch (err) {

@@ -8,6 +8,7 @@ import {
   confirmOccurrence,
   requestResolution,
 } from '@/services/occurrences'
+import { useOccurrencesStore } from '@/store/occurrences'
 import type { OccurrenceFilters, CreateOccurrenceInput } from '@/types'
 
 export function useOccurrences(filters?: OccurrenceFilters) {
@@ -38,7 +39,14 @@ export function useConfirmOccurrence() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => confirmOccurrence(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['occurrences'] }),
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['occurrences'] })
+      // Keep the modal in sync without requiring close/reopen
+      const { selectedOccurrence, setSelectedOccurrence } = useOccurrencesStore.getState()
+      if (selectedOccurrence?.id === id) {
+        setSelectedOccurrence({ ...selectedOccurrence, confirmations: selectedOccurrence.confirmations + 1 })
+      }
+    },
   })
 }
 
