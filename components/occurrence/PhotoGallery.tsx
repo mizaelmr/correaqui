@@ -29,8 +29,15 @@ function MediaThumb({ photo, onClick }: { photo: Photo; onClick: () => void }) {
     <img
       src={photo.url}
       alt="Foto da ocorrência"
-      className="w-full h-52 object-cover rounded-lg cursor-pointer"
+      className="w-full h-52 object-cover rounded-lg cursor-pointer bg-gray-200"
       onClick={onClick}
+      onError={(e) => {
+        const el = e.currentTarget
+        el.style.display = 'none'
+        const placeholder = document.createElement('div')
+        placeholder.className = 'w-full h-52 rounded-lg bg-gray-200 flex items-center justify-center cursor-pointer'
+        el.parentElement?.appendChild(placeholder)
+      }}
     />
   )
 }
