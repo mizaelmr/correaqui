@@ -48,6 +48,7 @@ export function NewOccurrenceModal() {
   const router = useRouter()
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([])
   const [uploading, setUploading] = useState(false)
+  const [showReporter, setShowReporter] = useState(false)
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(undefined)
   const [miniMapZoom, setMiniMapZoom] = useState(16)
@@ -179,6 +180,7 @@ export function NewOccurrenceModal() {
   const handleClose = () => {
     reset({ category: '', severity: '', description: '', streetAddress: '' })
     setPhotos([])
+    setShowReporter(false)
     setMarkerPos(null)
     setMapCenter(undefined)
     setMiniMapZoom(16)
@@ -218,6 +220,7 @@ export function NewOccurrenceModal() {
         neighborhood: addressInfo?.neighborhood,
         city: addressInfo?.city,
         state: addressInfo?.state,
+        showReporter,
         photos: uploadedUrls,
       })
 
@@ -438,6 +441,22 @@ export function NewOccurrenceModal() {
                 />
               </label>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg border border-gray-100">
+            <div>
+              <p className="text-sm font-medium text-gray-700">Exibir meu nome</p>
+              <p className="text-xs text-gray-400">Mostrar quem reportou esta ocorrência</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showReporter}
+              onClick={() => setShowReporter((v) => !v)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${showReporter ? 'bg-blue-600' : 'bg-gray-200'}`}
+            >
+              <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform ${showReporter ? 'translate-x-5' : 'translate-x-0'}`} />
+            </button>
           </div>
 
           <div className="flex gap-2 pt-1">

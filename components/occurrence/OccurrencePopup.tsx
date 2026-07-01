@@ -20,6 +20,7 @@ interface OccurrencePopupProps {
 export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
   const openOccurrenceModal = useOccurrencesStore((s) => s.openOccurrenceModal)
   const { data: session } = useSession()
+  const isOwner = !!session && session.user?.id === occurrence.userId
   const router = useRouter()
   const confirmMutation = useConfirmOccurrence()
 
@@ -103,7 +104,8 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
               size="sm"
               className="flex-1 h-8 text-xs bg-green-600 hover:bg-green-700 text-white font-medium"
               onClick={handleConfirm}
-              disabled={confirmMutation.isPending}
+              disabled={confirmMutation.isPending || isOwner}
+              title={isOwner ? 'Você registrou esta ocorrência' : undefined}
             >
               {confirmMutation.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />

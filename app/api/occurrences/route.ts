@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const {
       title, description, category, severity, latitude, longitude,
-      address, neighborhood, city, state, reporterName, reporterPhone, photos,
+      address, neighborhood, city, state, reporterName, reporterPhone, showReporter, photos,
     } = body
 
     const occurrence = await prisma.occurrence.create({
@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
         state,
         reporterName,
         reporterPhone,
+        showReporter: showReporter ?? false,
         userId: session.user.id,
         photos: {
           create: (photos as string[]).map((url: string) => ({ url })),

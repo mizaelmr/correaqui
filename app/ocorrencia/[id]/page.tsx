@@ -146,7 +146,7 @@ export default async function OcorrenciaPage({ params }: Props) {
                 <p className="text-sm font-medium text-gray-700">{o.confirmations}</p>
               </div>
             </div>
-            {o.user && (
+            {o.user && o.showReporter && (
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                 <div>

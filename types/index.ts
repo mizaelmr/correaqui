@@ -57,6 +57,7 @@ export interface Occurrence {
   reporterName?: string | null
   reporterPhone?: string | null
   confirmations: number
+  showReporter: boolean
   userId?: string | null
   photos: Photo[]
   timeline: TimelineEvent[]
@@ -77,6 +78,7 @@ export interface CreateOccurrenceInput {
   state?: string
   reporterName?: string
   reporterPhone?: string
+  showReporter?: boolean
   photos: string[]
 }
 
