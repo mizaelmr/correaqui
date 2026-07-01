@@ -105,13 +105,14 @@ export function NewOccurrenceModal() {
     }
   }, [location])
 
-  // Geolocation failure: fall back to store center or Petrolina
+  // Geolocation failure: fall back to search result (if active) or Petrolina
   useEffect(() => {
     if (geoError && !markerPos) {
-      const fallback: [number, number] = mapCenterFromStore ?? PETROLINA_DEFAULT
+      const hasSearch = !!searchFilterRef.current
+      const fallback: [number, number] = hasSearch && mapCenterFromStore ? mapCenterFromStore : PETROLINA_DEFAULT
       setMarkerPos(fallback)
       setMapCenter(fallback)
-      setMiniMapZoom(mapCenterFromStore ? (mapZoomFromStore ?? 13) : 13)
+      setMiniMapZoom(hasSearch && mapCenterFromStore ? (mapZoomFromStore ?? 13) : 13)
       geocode(fallback[0], fallback[1])
     }
   }, [geoError])
