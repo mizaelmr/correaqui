@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import sharp from 'sharp'
 import { randomUUID } from 'crypto'
-import { extname } from 'path'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const s3 = new S3Client({
+  region: process.env.AWS_DEFAULT_REGION ?? 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+})
+
+const BUCKET = process.env.AWS_BUCKET ?? 'corre-aqui'
+const MAX_DIMENSION = 800
+const WEBP_QUALITY = 80
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov']
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,32 +27,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Arquivo não enviado' }, { status: 400 })
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!allowedTypes.includes(file.type)) {
+    const isImage = ALLOWED_IMAGE_TYPES.includes(file.type)
+    const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type)
+
+    if (!isImage && !isVideo) {
       return NextResponse.json({ error: 'Tipo de arquivo não permitido' }, { status: 400 })
     }
 
-    const maxSize = 10 * 1024 * 1024 // 10MB
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: 'Arquivo muito grande (máx. 10MB)' }, { status: 400 })
+    if (isImage) {
+      const maxSize = 20 * 1024 * 1024
+      if (file.size > maxSize) {
+        return NextResponse.json({ error: 'Imagem muito grande (máx. 20MB)' }, { status: 400 })
+      }
+
+      const bytes = await file.arrayBuffer()
+      const webpBuffer = await sharp(Buffer.from(bytes))
+        .rotate()
+        .resize(MAX_DIMENSION, MAX_DIMENSION, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: WEBP_QUALITY })
+        .toBuffer()
+
+      const filename = `${randomUUID()}.webp`
+      await s3.send(new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: filename,
+        Body: webpBuffer,
+        ContentType: 'image/webp',
+      }))
+
+      const region = process.env.AWS_DEFAULT_REGION ?? 'us-east-1'
+      const url = `https://${BUCKET}.s3.${region}.amazonaws.com/${filename}`
+      return NextResponse.json({ url, type: 'image' }, { status: 201 })
     }
 
-    const ext = extname(file.name) || '.jpg'
+    // vídeo — upload direto sem processamento
+    const maxVideoSize = 100 * 1024 * 1024
+    if (file.size > maxVideoSize) {
+      return NextResponse.json({ error: 'Vídeo muito grande (máx. 100MB)' }, { status: 400 })
+    }
+
+    const ext = file.type === 'video/webm' ? '.webm' : file.type === 'video/quicktime' ? '.mov' : '.mp4'
     const filename = `${randomUUID()}${ext}`
     const bytes = await file.arrayBuffer()
 
-    const { error } = await supabase.storage
-      .from('uploads')
-      .upload(filename, bytes, { contentType: file.type })
+    await s3.send(new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: filename,
+      Body: Buffer.from(bytes),
+      ContentType: file.type,
+    }))
 
-    if (error) {
-      console.error('Supabase storage error:', error)
-      return NextResponse.json({ error: 'Erro ao fazer upload' }, { status: 500 })
-    }
-
-    const { data } = supabase.storage.from('uploads').getPublicUrl(filename)
-
-    return NextResponse.json({ url: data.publicUrl }, { status: 201 })
+    const region = process.env.AWS_DEFAULT_REGION ?? 'us-east-1'
+    const url = `https://${BUCKET}.s3.${region}.amazonaws.com/${filename}`
+    return NextResponse.json({ url, type: 'video' }, { status: 201 })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Erro ao fazer upload' }, { status: 500 })

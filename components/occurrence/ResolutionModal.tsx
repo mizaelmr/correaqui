@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRequestResolution } from '@/hooks/useOccurrences'
-import { uploadPhoto } from '@/services/occurrences'
+import { uploadMedia } from '@/services/occurrences'
 import { toast } from 'sonner'
 
 const schema = z.object({
@@ -63,7 +63,7 @@ export function ResolutionModal({ occurrenceId, open, onClose }: ResolutionModal
     try {
       const uploadedUrls: string[] = []
       for (const p of photos) {
-        const result = await uploadPhoto(p.file)
+        const result = await uploadMedia(p.file)
         uploadedUrls.push(result.url)
       }
 

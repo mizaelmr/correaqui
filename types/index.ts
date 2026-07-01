@@ -29,6 +29,7 @@ export type TimelineEventType =
 export interface Photo {
   id: string
   url: string
+  type: 'image' | 'video'
   occurrenceId: string
   createdAt: string
 }
@@ -79,7 +80,7 @@ export interface CreateOccurrenceInput {
   reporterName?: string
   reporterPhone?: string
   showReporter?: boolean
-  photos: string[]
+  photos: { url: string; type: string }[]
 }
 
 export interface OccurrenceFilters {
