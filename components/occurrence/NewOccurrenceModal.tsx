@@ -428,10 +428,8 @@ export function NewOccurrenceModal() {
 
           <div>
             <Label className="text-sm font-medium mb-1.5 block">
-              Fotos / Vídeo <span className="text-red-500">*</span>
-              <span className="ml-1 text-xs text-gray-400 font-normal">
-                {photos.some((p) => p.mediaType === 'video') ? '(1 vídeo + 1 foto)' : '(máx. 4 fotos)'}
-              </span>
+              Fotos <span className="text-red-500">*</span>
+              <span className="ml-1 text-xs text-gray-400 font-normal">(máx. 4 fotos)</span>
             </Label>
             <div className="grid grid-cols-4 gap-2">
               {photos.map((p, i) => (
@@ -475,18 +473,6 @@ export function NewOccurrenceModal() {
                   onChange={(e) => handleFilesChange(e, 'image')}
                 />
               </label>
-              {!photos.some((p) => p.mediaType === 'video') && (
-                <label className="h-16 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-400 transition-colors">
-                  <Video className="w-4 h-4 text-gray-400" />
-                  <span className="text-xs text-gray-400 mt-0.5">Vídeo</span>
-                  <input
-                    type="file"
-                    accept="video/mp4,video/quicktime,video/webm"
-                    className="hidden"
-                    onChange={(e) => handleFilesChange(e, 'video')}
-                  />
-                </label>
-              )}
             </div>
           </div>
 

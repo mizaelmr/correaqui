@@ -81,7 +81,8 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
                 key={photo.id}
                 src={photo.url}
                 alt=""
-                className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                className="w-16 h-16 rounded-lg object-cover border border-gray-200 bg-gray-200"
+                onError={(e) => { e.currentTarget.src = ''; e.currentTarget.className = 'w-16 h-16 rounded-lg border border-gray-200 bg-gray-200' }}
               />
             ))}
           </div>
