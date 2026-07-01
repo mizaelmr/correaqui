@@ -53,7 +53,15 @@ export async function requestResolution(
 
 export async function uploadMedia(file: File): Promise<{ url: string; type: 'image' | 'video' }> {
   const formData = new FormData()
-  formData.append('file', file)
+
+  if (file.type.startsWith('image/')) {
+    const { compressImage } = await import('@/lib/imageCompress')
+    const compressed = await compressImage(file)
+    formData.append('file', compressed, 'photo.webp')
+  } else {
+    formData.append('file', file)
+  }
+
   const res = await fetch('/api/upload', { method: 'POST', body: formData })
   if (!res.ok) throw new Error('Erro ao fazer upload')
   return res.json()
