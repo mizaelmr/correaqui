@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import sharp from 'sharp'
 import { randomUUID } from 'crypto'
 
 const s3 = new S3Client({
@@ -40,6 +39,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Imagem muito grande (máx. 20MB)' }, { status: 400 })
       }
 
+      const sharp = (await import('sharp')).default
       const bytes = await file.arrayBuffer()
       const webpBuffer = await sharp(Buffer.from(bytes))
         .rotate()
