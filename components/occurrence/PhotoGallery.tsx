@@ -34,10 +34,42 @@ function Lightbox({ photos, initialIndex, onClose }: {
   onClose: () => void
 }) {
   const [current, setCurrent] = useState(initialIndex)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const touchStartX = useRef<number | null>(null)
+
   const prev = () => setCurrent((c) => (c - 1 + photos.length) % photos.length)
   const next = () => setCurrent((c) => (c + 1) % photos.length)
-  const swipe = useSwipe(next, prev)
   const photo = photos[current]
+
+  // Native listeners com passive:false para capturar swipe mesmo sobre a imagem
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    const onStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX
+    }
+    const onMove = (e: TouchEvent) => {
+      if (touchStartX.current !== null) e.preventDefault()
+    }
+    const onEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null) return
+      const diff = touchStartX.current - e.changedTouches[0].clientX
+      if (Math.abs(diff) > 40) {
+        diff > 0 ? next() : prev()
+      }
+      touchStartX.current = null
+    }
+
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd, { passive: true })
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+    }
+  }, [current, photos.length])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -47,13 +79,13 @@ function Lightbox({ photos, initialIndex, onClose }: {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [current, photos.length])
 
   return createPortal(
     <div
+      ref={containerRef}
       className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center"
       onClick={onClose}
-      {...swipe}
     >
       <button className="absolute top-4 right-4 text-white p-2 z-10" onClick={onClose}>
         <X className="w-6 h-6" />
