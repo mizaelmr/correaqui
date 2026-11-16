@@ -49,6 +49,7 @@ export function NewOccurrenceModal() {
   const [photos, setPhotos] = useState<{ file: File; preview: string; mediaType: 'image' | 'video' }[]>([])
   const [uploading, setUploading] = useState(false)
   const [showReporter, setShowReporter] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
   const [markerPos, setMarkerPos] = useState<[number, number] | null>(null)
   const [mapCenter, setMapCenter] = useState<[number, number] | undefined>(undefined)
   const [miniMapZoom, setMiniMapZoom] = useState(16)
@@ -208,6 +209,7 @@ export function NewOccurrenceModal() {
     reset({ category: '', severity: '', description: '', streetAddress: '' })
     setPhotos([])
     setShowReporter(false)
+    setHoneypot('')
     setMarkerPos(null)
     setMapCenter(undefined)
     setMiniMapZoom(16)
@@ -247,14 +249,15 @@ export function NewOccurrenceModal() {
         neighborhood: addressInfo?.neighborhood,
         city: addressInfo?.city,
         state: addressInfo?.state,
-        showReporter,
+        showReporter: !!session && showReporter,
         photos: uploadedMedia,
+        website: honeypot || undefined,
       })
 
       toast.success('Ocorrência registrada com sucesso!')
       handleClose()
-    } catch {
-      toast.error('Erro ao registrar ocorrência.')
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : 'Erro ao registrar ocorrência.')
     } finally {
       setUploading(false)
     }
@@ -270,47 +273,34 @@ export function NewOccurrenceModal() {
           </DialogTitle>
         </DialogHeader>
 
-        {!session ? (
-          <div className="py-10 flex flex-col items-center gap-4 text-center">
-            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center">
-              <LogIn className="w-7 h-7 text-blue-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900 mb-1">Login necessário</p>
-              <p className="text-sm text-gray-500 max-w-xs">
-                Para registrar uma ocorrência você precisa estar conectado à sua conta.
-              </p>
-            </div>
-            <div className="flex gap-3 mt-1">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
+        {!session && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5">
+            <LogIn className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+            <p className="text-xs text-blue-900">
+              Você pode registrar sem conta. Quer acompanhar suas ocorrências?{' '}
               <button
                 type="button"
                 onClick={() => { handleClose(); router.push('/login') }}
-                className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                className="font-medium text-blue-700 underline-offset-2 hover:underline"
               >
                 Entrar
               </button>
-            </div>
-            <p className="text-xs text-gray-400">
-              Não tem conta?{' '}
-              <button
-                type="button"
-                onClick={() => { handleClose(); router.push('/cadastro') }}
-                className="text-blue-600 hover:underline"
-              >
-                Cadastre-se grátis
-              </button>
             </p>
           </div>
-        ) : (
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* Honeypot anti-robô: invisível para pessoas */}
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="hidden"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-sm font-medium mb-1.5 block">
@@ -477,6 +467,7 @@ export function NewOccurrenceModal() {
             </div>
           </div>
 
+          {session && (
           <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg border border-gray-100">
             <div>
               <p className="text-sm font-medium text-gray-700">Exibir meu nome</p>
@@ -492,6 +483,7 @@ export function NewOccurrenceModal() {
               <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition-transform ${showReporter ? 'translate-x-5' : 'translate-x-0'}`} />
             </button>
           </div>
+          )}
 
           <div className="flex gap-2 pt-1">
             <Button type="button" variant="outline" className="flex-1" onClick={handleClose}>
@@ -509,7 +501,6 @@ export function NewOccurrenceModal() {
             </Button>
           </div>
         </form>
-        )}
       </DialogContent>
     </Dialog>
   )

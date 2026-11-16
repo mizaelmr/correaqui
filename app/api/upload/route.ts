@@ -1,22 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { randomUUID } from 'crypto'
+import { auth } from '@/auth'
+import { MEDIA_BASE_URL, MEDIA_BUCKET, MEDIA_REGION } from '@/lib/media'
+import { checkRateLimit, getClientIp, hashIp } from '@/lib/rateLimit'
 
 const s3 = new S3Client({
-  region: process.env.AWS_DEFAULT_REGION ?? 'us-east-1',
+  region: MEDIA_REGION,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 })
 
-const BUCKET = process.env.AWS_BUCKET ?? 'corre-aqui'
+// Uploads por hora: anônimos por IP, logados por usuário
+const ANON_UPLOADS_PER_HOUR = 30
+const USER_UPLOADS_PER_HOUR = 60
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif']
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov']
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth()
+    const allowed = session?.user?.id
+      ? await checkRateLimit(`up:u:${session.user.id}`, USER_UPLOADS_PER_HOUR, 60 * 60 * 1000)
+      : await checkRateLimit(`up:ip:${hashIp(getClientIp(req))}`, ANON_UPLOADS_PER_HOUR, 60 * 60 * 1000)
+    if (!allowed) {
+      return NextResponse.json({ error: 'Muitos envios em pouco tempo. Tente novamente mais tarde.' }, { status: 429 })
+    }
+
     const formData = await req.formData()
     const file = formData.get('file') as File | null
 
@@ -44,14 +57,13 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer()
 
     await s3.send(new PutObjectCommand({
-      Bucket: BUCKET,
+      Bucket: MEDIA_BUCKET,
       Key: filename,
       Body: Buffer.from(bytes),
       ContentType: file.type,
     }))
 
-    const region = process.env.AWS_DEFAULT_REGION ?? 'us-east-1'
-    const url = `https://${BUCKET}.s3.${region}.amazonaws.com/${filename}`
+    const url = `${MEDIA_BASE_URL}${filename}`
     return NextResponse.json({ url, type: isImage ? 'image' : 'video' }, { status: 201 })
   } catch (err) {
     console.error(err)

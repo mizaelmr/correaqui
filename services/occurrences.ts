@@ -2,6 +2,14 @@ import type { Occurrence, CreateOccurrenceInput, OccurrenceFilters } from '@/typ
 
 const API_BASE = '/api/occurrences'
 
+async function errorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.json()
+    if (typeof body?.error === 'string' && res.status !== 500) return body.error
+  } catch {}
+  return fallback
+}
+
 export async function fetchOccurrences(filters?: OccurrenceFilters): Promise<Occurrence[]> {
   const params = new URLSearchParams()
   if (filters?.category) params.set('category', filters.category)
@@ -28,13 +36,13 @@ export async function createOccurrence(data: CreateOccurrenceInput): Promise<Occ
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  if (!res.ok) throw new Error('Erro ao criar ocorrência')
+  if (!res.ok) throw new Error(await errorMessage(res, 'Erro ao registrar ocorrência.'))
   return res.json()
 }
 
 export async function confirmOccurrence(id: string): Promise<Occurrence> {
   const res = await fetch(`${API_BASE}/${id}/confirm`, { method: 'POST' })
-  if (!res.ok) throw new Error('Erro ao confirmar ocorrência')
+  if (!res.ok) throw new Error(await errorMessage(res, 'Erro ao confirmar.'))
   return res.json()
 }
 
@@ -47,7 +55,7 @@ export async function requestResolution(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  if (!res.ok) throw new Error('Erro ao solicitar resolução')
+  if (!res.ok) throw new Error(await errorMessage(res, 'Erro ao enviar solicitação.'))
   return res.json()
 }
 
@@ -63,6 +71,6 @@ export async function uploadMedia(file: File): Promise<{ url: string; type: 'ima
   }
 
   const res = await fetch('/api/upload', { method: 'POST', body: formData })
-  if (!res.ok) throw new Error('Erro ao fazer upload')
+  if (!res.ok) throw new Error(await errorMessage(res, 'Erro ao enviar a foto.'))
   return res.json()
 }
