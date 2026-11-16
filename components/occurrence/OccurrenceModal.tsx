@@ -81,7 +81,7 @@ export function OccurrenceModal() {
       toast.success('Obrigado! Ocorrência confirmada.')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : ''
-      toast.error(msg.includes('409') ? 'Você já confirmou esta ocorrência.' : 'Erro ao confirmar.')
+      toast.error(msg || 'Erro ao confirmar.')
     }
   }
 

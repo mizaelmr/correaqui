@@ -146,3 +146,12 @@ model ResolutionRequest {
   photos        String[]
   createdAt     DateTime @default(now())
 }
+
+// Registros para limitar requisições anônimas (anti-spam) por IP com hash
+model RateLimit {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}

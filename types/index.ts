@@ -81,6 +81,8 @@ export interface CreateOccurrenceInput {
   reporterPhone?: string
   showReporter?: boolean
   photos: { url: string; type: string }[]
+  /** Honeypot anti-spam — deve ficar vazio */
+  website?: string
 }
 
 export interface OccurrenceFilters {
