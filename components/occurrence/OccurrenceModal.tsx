@@ -14,6 +14,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { CategoryIcon } from '@/components/shared/CategoryIcon'
 import { TimeIndicator } from '@/components/shared/TimeIndicator'
 import { ResolutionModal } from './ResolutionModal'
+import { isStaffRole } from '@/lib/roles'
 import { useOccurrencesStore } from '@/store/occurrences'
 import { useConfirmOccurrence, useOccurrences } from '@/hooks/useOccurrences'
 import { useQueryClient } from '@tanstack/react-query'
@@ -38,6 +39,9 @@ export function OccurrenceModal() {
   const o = selectedOccurrence
   const isAuthor = session?.user?.id === o.userId
   const isLoggedIn = !!session
+  const isStaff = isStaffRole(session?.user?.role)
+  // Autor só informa antes da validação; prefeitura/admin pode fechar até a que está aguardando
+  const canResolve = isStaff ? o.status !== 'RESOLVIDA' : isAuthor && o.status !== 'RESOLVIDA' && o.status !== 'AGUARDANDO_VALIDACAO'
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/ocorrencia/${o.id}`
   const waText = encodeURIComponent(`🚨 *${o.title}*\n📍 ${o.address}\n\nVeja no CORRE AQUI PREFEITO: ${shareUrl}`)
@@ -230,13 +234,13 @@ export function OccurrenceModal() {
                       Confirmar ({o.confirmations})
                     </Button>
                   )}
-                  {o.status !== 'RESOLVIDA' && o.status !== 'AGUARDANDO_VALIDACAO' && (
+                  {canResolve && (
                     <Button
                       className="flex-1 text-sm bg-green-600 hover:bg-green-700"
                       onClick={() => setShowResolution(true)}
                     >
                       <CheckCircle className="w-4 h-4 mr-1.5" />
-                      Foi resolvido
+                      {isStaff ? 'Marcar como resolvida' : 'Foi resolvido'}
                     </Button>
                   )}
                 </>
@@ -289,6 +293,7 @@ export function OccurrenceModal() {
         occurrenceId={o.id}
         open={showResolution}
         onClose={() => setShowResolution(false)}
+        isStaff={isStaff}
       />
     </>
   )

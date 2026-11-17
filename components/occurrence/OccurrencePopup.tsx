@@ -9,6 +9,7 @@ import { useOccurrencesStore } from '@/store/occurrences'
 import { useConfirmOccurrence } from '@/hooks/useOccurrences'
 import { CATEGORY_LABELS } from '@/lib/constants'
 import { useSession } from 'next-auth/react'
+import { isStaffRole } from '@/lib/roles'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import type { Occurrence } from '@/types'
@@ -21,6 +22,8 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
   const openOccurrenceModal = useOccurrencesStore((s) => s.openOccurrenceModal)
   const { data: session } = useSession()
   const isOwner = !!session && session.user?.id === occurrence.userId
+  const isStaff = isStaffRole(session?.user?.role)
+  const canResolve = isOwner || isStaff
   const router = useRouter()
   const confirmMutation = useConfirmOccurrence()
 
@@ -116,15 +119,17 @@ export function OccurrencePopup({ occurrence }: OccurrencePopupProps) {
               Confirmar
             </Button>
 
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 h-8 text-xs border-green-200 text-green-700 hover:bg-green-50"
-              onClick={handleResolved}
-            >
-              <CheckCheck className="w-3.5 h-3.5 mr-1" />
-              Já resolvido
-            </Button>
+            {canResolve && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs border-green-200 text-green-700 hover:bg-green-50"
+                onClick={handleResolved}
+              >
+                <CheckCheck className="w-3.5 h-3.5 mr-1" />
+                Já resolvido
+              </Button>
+            )}
           </div>
         )}
       </div>

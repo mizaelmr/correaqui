@@ -26,9 +26,11 @@ interface ResolutionModalProps {
   occurrenceId: string
   open: boolean
   onClose: () => void
+  /** Prefeitura/admin: fecha direto como resolvida */
+  isStaff?: boolean
 }
 
-export function ResolutionModal({ occurrenceId, open, onClose }: ResolutionModalProps) {
+export function ResolutionModal({ occurrenceId, open, onClose, isStaff = false }: ResolutionModalProps) {
   const [photos, setPhotos] = useState<{ file: File; preview: string; url?: string }[]>([])
   const [uploading, setUploading] = useState(false)
   const resolveMutation = useRequestResolution()
@@ -72,12 +74,12 @@ export function ResolutionModal({ occurrenceId, open, onClose }: ResolutionModal
         data: { ...data, photos: uploadedUrls },
       })
 
-      toast.success('Solicitação enviada! A resolução será validada em breve.')
+      toast.success(isStaff ? 'Ocorrência marcada como resolvida.' : 'Solicitação enviada! A resolução será validada em breve.')
       reset()
       setPhotos([])
       onClose()
-    } catch {
-      toast.error('Erro ao enviar solicitação.')
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : 'Erro ao enviar solicitação.')
     } finally {
       setUploading(false)
     }
@@ -87,7 +89,7 @@ export function ResolutionModal({ occurrenceId, open, onClose }: ResolutionModal
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Informar Resolução</DialogTitle>
+          <DialogTitle>{isStaff ? 'Marcar como resolvida' : 'Informar Resolução'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

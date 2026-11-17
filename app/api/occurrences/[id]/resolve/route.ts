@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth'
 import { isOwnMediaUrl } from '@/lib/media'
 import { toPublicOccurrence } from '@/lib/publicOccurrence'
+import { isStaffRole } from '@/lib/roles'
 
 const schema = z.object({
   comment: z.string().trim().max(1000).optional(),
@@ -26,10 +27,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
     const { comment, reporterName, reporterPhone, photos } = parsed.data
 
-    const current = await prisma.occurrence.findUnique({ where: { id }, select: { status: true } })
+    const current = await prisma.occurrence.findUnique({ where: { id }, select: { status: true, userId: true } })
     if (!current) return NextResponse.json({ error: 'Ocorrência não encontrada.' }, { status: 404 })
-    if (current.status === 'RESOLVIDA' || current.status === 'AGUARDANDO_VALIDACAO') {
-      return NextResponse.json({ error: 'Esta ocorrência já está resolvida ou aguardando validação.' }, { status: 409 })
+
+    // Só quem registrou a ocorrência (logado) ou a prefeitura/admin pode informar a resolução
+    const isStaff = isStaffRole(session.user.role)
+    const isAuthor = !!current.userId && current.userId === session.user.id
+    if (!isStaff && !isAuthor) {
+      return NextResponse.json(
+        { error: 'Só quem registrou a ocorrência ou a prefeitura pode informar a resolução.' },
+        { status: 403 }
+      )
+    }
+
+    if (current.status === 'RESOLVIDA') {
+      return NextResponse.json({ error: 'Esta ocorrência já está resolvida.' }, { status: 409 })
+    }
+    if (!isStaff && current.status === 'AGUARDANDO_VALIDACAO') {
+      return NextResponse.json({ error: 'Esta ocorrência já está aguardando validação.' }, { status: 409 })
     }
 
     const occurrence = await prisma.$transaction(async (tx) => {
@@ -40,14 +55,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return tx.occurrence.update({
         where: { id },
         data: {
-          status: 'AGUARDANDO_VALIDACAO',
+          // Prefeitura/admin já valida na hora; o autor manda para validação
+          status: isStaff ? 'RESOLVIDA' : 'AGUARDANDO_VALIDACAO',
           photos: { create: photos.map((url) => ({ url, type: 'image' })) },
           timeline: {
-            create: [
-              { type: 'FOTOS_ADICIONADAS', description: 'Novas fotos adicionadas como evidência.' },
-              { type: 'RESOLUCAO_SOLICITADA', description: 'Cidadão informou que o problema foi resolvido. Aguardando validação.' },
-              { type: 'STATUS_ALTERADO', description: 'Status alterado para: Aguardando Validação.' },
-            ],
+            create: isStaff
+              ? [
+                  { type: 'FOTOS_ADICIONADAS', description: 'Novas fotos adicionadas como evidência.' },
+                  { type: 'RESOLUCAO_APROVADA', description: 'Resolução confirmada pela prefeitura.' },
+                  { type: 'STATUS_ALTERADO', description: 'Status alterado para: Resolvida.' },
+                ]
+              : [
+                  { type: 'FOTOS_ADICIONADAS', description: 'Novas fotos adicionadas como evidência.' },
+                  { type: 'RESOLUCAO_SOLICITADA', description: 'Quem registrou informou que o problema foi resolvido. Aguardando validação.' },
+                  { type: 'STATUS_ALTERADO', description: 'Status alterado para: Aguardando Validação.' },
+                ],
           },
         },
         include: { photos: true, timeline: true },

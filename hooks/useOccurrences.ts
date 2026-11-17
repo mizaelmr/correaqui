@@ -60,6 +60,11 @@ export function useRequestResolution() {
       id: string
       data: { comment?: string; reporterName?: string; reporterPhone?: string; photos: string[] }
     }) => requestResolution(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['occurrences'] }),
+    onSuccess: (updated, { id }) => {
+      qc.invalidateQueries({ queryKey: ['occurrences'] })
+      // Atualiza o modal aberto com o novo status (sem precisar fechar e abrir)
+      const { selectedOccurrence, setSelectedOccurrence } = useOccurrencesStore.getState()
+      if (selectedOccurrence?.id === id) setSelectedOccurrence({ ...selectedOccurrence, ...updated })
+    },
   })
 }
